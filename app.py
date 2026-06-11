@@ -18,7 +18,8 @@ def add_logo():
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", width=150)
     else:
-        st.sidebar.markdown("<h2 style='text-align: center; color: #ff4b4b;'>📦 AssetFlow</h2>", unsafe_with_html=True)
+        # CORRECTED: unsafe_allow_html used here
+        st.sidebar.markdown("<h2 style='text-align: center; color: #00D2FF;'>📦 AssetFlow</h2>", unsafe_allow_html=True)
 
 add_logo()
 
@@ -36,7 +37,6 @@ if not st.session_state['logged_in']:
         submit_login = st.form_submit_button("Login")
         
         if submit_login:
-            # Simple template login configuration (Pore custom table dynamic kora jabe)
             if username == "admin" and password == "kccl@2026":
                 st.session_state['logged_in'] = True
                 st.rerun()
@@ -62,7 +62,6 @@ def convert_df_to_csv(df):
 if page == "Dashboard":
     st.header("📈 Inventory Dashboard Summary")
     
-    # Live Fetching from Uncommon Tables
     try:
         p_res = supabase.table('tpl_inv_products').select('*').execute()
         tx_res = supabase.table('tpl_inv_transactions').select('*').execute()
@@ -74,8 +73,6 @@ if page == "Dashboard":
         df_p, df_t = pd.DataFrame(), pd.DataFrame()
 
     if not df_p.empty:
-        # Dynamic Real-time Calculation for In-Stock & Total Counts
-        # Stock calculation logic based on Transaction actions
         st.subheader("📦 Product Inventory Cards")
         cols = st.columns(4)
         
@@ -87,11 +84,9 @@ if page == "Dashboard":
             i_code = row['item_code']
             u_type = row['default_unit']
             
-            # Extract transactions for this specific product
             if not df_t.empty and 'product_id' in df_t.columns:
                 p_tx = df_t[df_t['product_id'] == p_id]
                 
-                # Logic: UPLOAD/RETURN increments stock, ISSUE decrements stock
                 uploaded = pd.to_numeric(p_tx[p_tx['action_type'] == 'UPLOAD']['quantity']).sum()
                 returned = pd.to_numeric(p_tx[p_tx['action_type'] == 'RETURN']['quantity']).sum()
                 issued = pd.to_numeric(p_tx[p_tx['action_type'] == 'ISSUE']['quantity']).sum()
@@ -102,7 +97,6 @@ if page == "Dashboard":
                 in_stock = 0.0
                 total_added = 0
 
-            # Store summary data for the summary download action
             product_summaries.append({
                 "Product Name": p_name,
                 "Item Code": i_code,
@@ -112,6 +106,7 @@ if page == "Dashboard":
 
             # Display individual cards loop
             with cols[idx % 4]:
+                # CORRECTED: unsafe_allow_html used here as well
                 st.markdown(
                     f"""
                     <div style="border: 2px solid #4A4A4A; padding: 15px; border-radius: 10px; background-color: #1E1E1E; margin-bottom: 15px;">
@@ -174,7 +169,7 @@ if page == "Dashboard":
                 else:
                     st.caption("No issue entries recorded for this item line.")
     else:
-        st.info("Your custom table 'tpl_inv_products' is currently empty. Go to transaction page or backend to map items.")
+        st.info("Your custom table 'tpl_inv_products' is currently empty. Please populate it in Supabase.")
 
 # ==========================================
 # 4. TRANSACTION PAGE
@@ -190,18 +185,15 @@ elif page == "Transaction":
 
     if raw_p_list:
         p_map = {item['product_name']: item for item in raw_p_list}
-        
-        # UI Input Section Layout
         col_form1, col_form2 = st.columns(2)
         
         with col_form1:
             selected_product_name = st.selectbox("Select Product List (Dynamic Master Dropdown)", list(p_map.keys()))
             target_product = p_map[selected_product_name]
             
-            item_code = st.text_input("Item Code Identifier", value=target_product['item_code'], disabled=True)
-            serial_number = st.text_area("Serial Number Registry (For high bulk counts separate entries with commas)")
+            st.text_input("Item Code Identifier", value=target_product['item_code'], disabled=True)
+            serial_number = st.text_area("Serial Number Registry (Separate entries with commas)")
             
-            # Unit Dropdown configuration handling fractional logic parameters (.5 handled using step precision)
             unit = st.selectbox("Unit Classification System", ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX"])
             quantity = st.number_input("Transaction Quantity Input Value", min_value=0.000, step=0.001, format="%.3f")
             
@@ -216,7 +208,6 @@ elif page == "Transaction":
             if quantity <= 0:
                 st.error("Transaction failed: Quantity must be greater than zero.")
             else:
-                # Capture exact current system runtime timestamps automatically
                 execution_time = datetime.now().isoformat()
                 
                 tx_payload = {
@@ -232,7 +223,6 @@ elif page == "Transaction":
                 }
                 
                 try:
-                    # Write into uncommon target tables
                     supabase.table('tpl_inv_transactions').insert(tx_payload).execute()
                     st.success(f"Successfully tracked: {action_type} action locked at {execution_time}!")
                 except Exception as ex:
@@ -257,7 +247,6 @@ elif page == "Reports":
         df_product_map = pd.DataFrame()
 
     if not df_master_report.empty:
-        # Join product name column for clean readable interface layouts
         if not df_product_map.empty:
             df_master_report = pd.merge(df_master_report, df_product_map, left_on="product_id", right_on="id", how="left")
         
@@ -266,7 +255,7 @@ elif page == "Reports":
         filter_col4, filter_col5 = st.columns(2)
         
         with filter_col1:
-            chosen_action = st.multiselect("Filter by Action Status (Issued/Returned/Fresh)", df_master_report['action_type'].unique())
+            chosen_action = st.multiselect("Filter by Action Status", df_master_report['action_type'].unique())
         with filter_col2:
             chosen_item = st.multiselect("Filter by Product Line Name", df_master_report['product_name'].unique() if 'product_name' in df_master_report.columns else df_master_report['item_code'].unique())
         with filter_col3:
@@ -276,7 +265,6 @@ elif page == "Reports":
         with filter_col5:
             st.caption("Date parsing framework auto active")
             
-        # Compile multi filter conditions dynamically on Pandas frame reference logic
         df_filtered = df_master_report.copy()
         
         if chosen_action:
@@ -294,7 +282,6 @@ elif page == "Reports":
         st.markdown("---")
         st.dataframe(df_filtered, use_container_width=True)
         
-        # Download data operation pipeline for filtered subsets
         st.download_button(
             label="📥 Export Current Filtered View to CSV Ledger File",
             data=convert_df_to_csv(df_filtered),
