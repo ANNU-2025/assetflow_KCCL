@@ -1,177 +1,306 @@
-import streamlit as st  # <--- EI LINE-TA ABOSSHOI LAGBE
+import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
 import os
 from datetime import datetime
+
+# ==========================================
+# 1. DATABASE CONFIGURATION & INITIALIZATION
+# ==========================================
+url = "https://emdjnndnsdebhbzebrsg.supabase.co"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
+supabase: Client = create_client(url, key)
+
+st.set_page_config(page_title="AssetFlow KCCL Template", layout="wide")
 
 # --- LOGO PROVISION FOR ALL PAGES ---
 def add_logo():
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", width=150)
     else:
-        st.sidebar.title("📦 MY INVENTORY")
+        st.sidebar.markdown("<h2 style='text-align: center; color: #ff4b4b;'>📦 AssetFlow</h2>", unsafe_with_html=True)
 
-# --- SUPABASE CONNECTION ---
-url = "https://emdjnndnsdebhbzebrsg.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
-supabase: Client = create_client(url, key)
-
-st.set_page_config(page_title="Inventory Management Template", layout="wide")
 add_logo()
 
-# --- NAVIGATION ---
-page = st.sidebar.radio("Navigation", ["Dashboard", "Transaction", "Reports"])
+# ==========================================
+# 2. LOGIN MECHANISM (TEMPLATE SESSION-BASED)
+# ==========================================
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+
+if not st.session_state['logged_in']:
+    st.subheader("🔑 System Secure Login")
+    with st.form("Login Form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit_login = st.form_submit_button("Login")
+        
+        if submit_login:
+            # Simple template login configuration (Pore custom table dynamic kora jabe)
+            if username == "admin" and password == "kccl@2026":
+                st.session_state['logged_in'] = True
+                st.rerun()
+            else:
+                st.error("Invalid Username or Password!")
+    st.stop()
+
+# Logout provision in sidebar
+if st.sidebar.button("🔓 Logout"):
+    st.session_state['logged_in'] = False
+    st.rerun()
+
+st.sidebar.markdown("---")
+page = st.sidebar.radio("📌 Navigation Menu", ["Dashboard", "Transaction", "Reports"])
+
+# Helper function to convert dataframes safely to CSV bytes
+def convert_df_to_csv(df):
+    return df.to_csv(index=False).encode('utf-8')
 
 # ==========================================
-# 1. DASHBOARD PAGE
+# 3. DASHBOARD PAGE
 # ==========================================
 if page == "Dashboard":
-    st.header("📈 Inventory Dashboard")
+    st.header("📈 Inventory Dashboard Summary")
     
-    # Supabase theke uncommon table query pull
+    # Live Fetching from Uncommon Tables
     try:
-        products_res = supabase.table('tpl_inv_products').select('*').execute()
-        summary_res = supabase.table('tpl_inv_stock_summary').select('*').execute()
+        p_res = supabase.table('tpl_inv_products').select('*').execute()
         tx_res = supabase.table('tpl_inv_transactions').select('*').execute()
         
-        df_p = pd.DataFrame(products_res.data)
-        df_s = pd.DataFrame(summary_res.data)
+        df_p = pd.DataFrame(p_res.data)
         df_t = pd.DataFrame(tx_res.data)
     except Exception as e:
-        st.error(f"Database error: {e}")
-        df_p, df_s, df_t = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        st.error(f"Database query processing failed: {e}")
+        df_p, df_t = pd.DataFrame(), pd.DataFrame()
 
-    if not df_s.empty and not df_p.empty:
-        # Merge product name for visualization
-        df_dash = pd.merge(df_s, df_p, on="product_id")
-        
-        # PRODUCT WISE CARDS LOOP
+    if not df_p.empty:
+        # Dynamic Real-time Calculation for In-Stock & Total Counts
+        # Stock calculation logic based on Transaction actions
+        st.subheader("📦 Product Inventory Cards")
         cols = st.columns(4)
-        for idx, row in df_dash.iterrows():
-            with cols[idx % 4]:
-                st.metric(
-                    label=f"📦 {row['product_name']} ({row['item_code']})",
-                    value=f"{row['in_stock_qty']} {row['default_unit']}",
-                    delta=f"Total Added: {row['total_system_qty']}",
-                    delta_color="off"
-                )
-    else:
-        st.info("No product data available in your uncommon tables yet.")
+        
+        product_summaries = []
+        
+        for idx, row in df_p.iterrows():
+            p_id = row['id']
+            p_name = row['product_name']
+            i_code = row['item_code']
+            u_type = row['default_unit']
+            
+            # Extract transactions for this specific product
+            if not df_t.empty and 'product_id' in df_t.columns:
+                p_tx = df_t[df_t['product_id'] == p_id]
+                
+                # Logic: UPLOAD/RETURN increments stock, ISSUE decrements stock
+                uploaded = pd.to_numeric(p_tx[p_tx['action_type'] == 'UPLOAD']['quantity']).sum()
+                returned = pd.to_numeric(p_tx[p_tx['action_type'] == 'RETURN']['quantity']).sum()
+                issued = pd.to_numeric(p_tx[p_tx['action_type'] == 'ISSUE']['quantity']).sum()
+                
+                in_stock = (uploaded + returned) - issued
+                total_added = row['total_added_to_system'] if 'total_added_to_system' in row else uploaded
+            else:
+                in_stock = 0.0
+                total_added = 0
 
-    st.markdown("---")
-    st.subheader("📥 Download Section")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if not df_t.empty:
-            csv_dump = df_t.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Full Dump", data=csv_dump, file_name="full_dump.csv", mime="text/csv")
-            
-    with col2:
-        if not df_s.empty:
-            csv_sum = df_s.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download Product Summary", data=csv_sum, file_name="product_summary.csv", mime="text/csv")
-            
-    with col3:
-        selected_card = st.selectbox("Select Product for Issued Details", df_p['product_name'].unique() if not df_p.empty else [])
-        if selected_card and not df_t.empty:
-            # Filter issued details for click response
-            p_id = df_p[df_p['product_name'] == selected_card]['id'].values[0]
-            df_issued = df_t[(df_t['product_id'] == p_id) & (df_t['action_type'] == 'ISSUE')]
-            csv_issued = df_issued.to_csv(index=False).encode('utf-8')
-            st.download_button(f"📥 Download {selected_card} Issued Logs", data=csv_issued, file_name=f"{selected_card}_issued.csv", mime="text/csv")
+            # Store summary data for the summary download action
+            product_summaries.append({
+                "Product Name": p_name,
+                "Item Code": i_code,
+                "In Stock Quantity": f"{in_stock:.3f} {u_type}",
+                "Total System Entry": total_added
+            })
+
+            # Display individual cards loop
+            with cols[idx % 4]:
+                st.markdown(
+                    f"""
+                    <div style="border: 2px solid #4A4A4A; padding: 15px; border-radius: 10px; background-color: #1E1E1E; margin-bottom: 15px;">
+                        <h4 style='color: #00D2FF; margin: 0;'>{p_name}</h4>
+                        <small style='color: #888;'>Code: {i_code}</small>
+                        <h2 style='margin: 10px 0; color: #FFF;'>{in_stock:.3f} <span style='font-size: 16px;'>{u_type}</span></h2>
+                        <div style='border-top: 1px solid #333; padding-top: 5px;'>
+                            <span style='font-size: 11px; color: #AAA;'>Total Count (Added): <b>{total_added}</b></span>
+                        </div>
+                    </div>
+                    """, 
+                    unsafe_with_html=True
+                )
+        
+        df_summary_download = pd.DataFrame(product_summaries)
+
+        st.markdown("---")
+        st.subheader("📥 Master Download Dashboard Operations")
+        
+        dl_col1, dl_col2, dl_col3 = st.columns(3)
+        
+        with dl_col1:
+            st.markdown("##### 1. Master Dump Log")
+            if not df_t.empty:
+                st.download_button(
+                    label="📥 Download Full Dump CSV",
+                    data=convert_df_to_csv(df_t),
+                    file_name=f"full_inventory_dump_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    key="dl_full_dump"
+                )
+            else:
+                st.caption("No transaction logs recorded to dump yet.")
+                
+        with dl_col2:
+            st.markdown("##### 2. Product Summary Logs")
+            if not df_summary_download.empty:
+                st.download_button(
+                    label="📥 Download Product Summary",
+                    data=convert_df_to_csv(df_summary_download),
+                    file_name="product_stock_summary.csv",
+                    mime="text/csv",
+                    key="dl_prod_summary"
+                )
+                
+        with dl_col3:
+            st.markdown("##### 3. Card Click Issued Details")
+            target_p = st.selectbox("Choose Card Product Line", df_p['product_name'].unique())
+            if target_p and not df_t.empty:
+                target_id = df_p[df_p['product_name'] == target_p]['id'].values[0]
+                df_card_issued = df_t[(df_t['product_id'] == target_id) & (df_t['action_type'] == 'ISSUE')]
+                
+                if not df_card_issued.empty:
+                    st.download_button(
+                        label=f"📥 Download {target_p} Issued Data",
+                        data=convert_df_to_csv(df_card_issued),
+                        file_name=f"{target_p.lower().replace(' ', '_')}_issued_details.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.caption("No issue entries recorded for this item line.")
+    else:
+        st.info("Your custom table 'tpl_inv_products' is currently empty. Go to transaction page or backend to map items.")
 
 # ==========================================
-# 2. TRANSACTION PAGE
+# 4. TRANSACTION PAGE
 # ==========================================
 elif page == "Transaction":
-    st.header("🔄 New Transaction Entry")
+    st.header("🔄 Stock Transaction Registry Pipeline")
     
-    # Dynamic Dropdown load from Master table
     try:
         p_res = supabase.table('tpl_inv_products').select('id', 'product_name', 'item_code').execute()
-        products_list = p_res.data
+        raw_p_list = p_res.data
     except:
-        products_list = []
+        raw_p_list = []
+
+    if raw_p_list:
+        p_map = {item['product_name']: item for item in raw_p_list}
         
-    if products_list:
-        p_options = {p['product_name']: p for p in products_list}
-        selected_p_name = st.selectbox("Product List (Dropdown)", list(p_options.keys()))
+        # UI Input Section Layout
+        col_form1, col_form2 = st.columns(2)
         
-        selected_p = p_options[selected_p_name]
-        item_code = st.text_input("Item Code", value=selected_p['item_code'], disabled=True)
-        
-        serial_no = st.text_input("Serial Number (For bulk, separate with comma)")
-        
-        # Unit and Stock fractional logic (.5 ML validation handle)
-        unit = st.selectbox("Unit", ["PCS", "LTR", "ML", "MTR"])
-        quantity = st.number_input("Quantity", min_value=0.000, step=0.100, format="%.3f")
-        
-        issued_to = st.text_input("Issued To")
-        invoice_no = st.text_input("Invoice No")
-        action = st.selectbox("Action", ["ISSUE", "RETURN", "UPLOAD"])
-        
-        if st.button("Submit Transaction"):
-            # Automatic Capture of current Date and Time
-            timestamp = datetime.now().isoformat()
+        with col_form1:
+            selected_product_name = st.selectbox("Select Product List (Dynamic Master Dropdown)", list(p_map.keys()))
+            target_product = p_map[selected_product_name]
             
-            tx_data = {
-                "product_id": selected_p['id'],
-                "item_code": selected_p['item_code'],
-                "serial_number": serial_no,
-                "quantity": quantity,
-                "unit": unit,
-                "issued_to": issued_to,
-                "invoice_no": invoice_no,
-                "action_type": action,
-                "created_at": timestamp
-            }
+            item_code = st.text_input("Item Code Identifier", value=target_product['item_code'], disabled=True)
+            serial_number = st.text_area("Serial Number Registry (For high bulk counts separate entries with commas)")
             
-            # Insert logic into Supabase
-            try:
-                supabase.table('tpl_inv_transactions').insert(tx_data).execute()
-                st.success(f"Transaction recorded successfully at {timestamp}!")
-            except Exception as e:
-                st.error(f"Error saving transaction: {e}")
+            # Unit Dropdown configuration handling fractional logic parameters (.5 handled using step precision)
+            unit = st.selectbox("Unit Classification System", ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX"])
+            quantity = st.number_input("Transaction Quantity Input Value", min_value=0.000, step=0.001, format="%.3f")
+            
+        with col_form2:
+            issued_to = st.text_input("Issued To Destination Person/Vendor Name")
+            invoice_no = st.text_input("Invoice Tracking Number / DC No")
+            action_type = st.selectbox("Action Execution Method", ["ISSUE", "RETURN", "UPLOAD"])
+            st.markdown("<br><br>", unsafe_with_html=True)
+            submit_tx = st.button("⚡ Execute & Commit Transaction to Database", use_container_width=True)
+
+        if submit_tx:
+            if quantity <= 0:
+                st.error("Transaction failed: Quantity must be greater than zero.")
+            else:
+                # Capture exact current system runtime timestamps automatically
+                execution_time = datetime.now().isoformat()
+                
+                tx_payload = {
+                    "product_id": target_product['id'],
+                    "item_code": target_product['item_code'],
+                    "serial_number": serial_number,
+                    "quantity": quantity,
+                    "unit": unit,
+                    "issued_to": issued_to,
+                    "invoice_no": invoice_no,
+                    "action_type": action_type,
+                    "created_at": execution_time
+                }
+                
+                try:
+                    # Write into uncommon target tables
+                    supabase.table('tpl_inv_transactions').insert(tx_payload).execute()
+                    st.success(f"Successfully tracked: {action_type} action locked at {execution_time}!")
+                except Exception as ex:
+                    st.error(f"Failed to post ledger configuration setup: {ex}")
     else:
-        st.warning("Please add products to 'tpl_inv_products' table first.")
+        st.warning("No Master Product mappings detected. Please confirm database setup records exist in 'tpl_inv_products'.")
 
 # ==========================================
-# 3. REPORTS PAGE (AUTO FILTERS & DOWNLOAD)
+# 5. REPORTS PAGE (ADVANCED AUTO-FILTERS)
 # ==========================================
 elif page == "Reports":
-    st.header("📊 Advanced Auto-Filter Reports")
+    st.header("📊 Advanced Analytics & Multi-Filter Ledger Reports")
     
     try:
         tx_res = supabase.table('tpl_inv_transactions').select('*').execute()
-        df_rep = pd.DataFrame(tx_res.data)
+        df_master_report = pd.DataFrame(tx_res.data)
+        
+        p_res = supabase.table('tpl_inv_products').select('id', 'product_name').execute()
+        df_product_map = pd.DataFrame(p_res.data)
     except:
-        df_rep = pd.DataFrame()
+        df_master_report = pd.DataFrame()
+        df_product_map = pd.DataFrame()
+
+    if not df_master_report.empty:
+        # Join product name column for clean readable interface layouts
+        if not df_product_map.empty:
+            df_master_report = pd.merge(df_master_report, df_product_map, left_on="product_id", right_on="id", how="left")
         
-    if not df_rep.empty:
-        # Layout design for auto-filters
-        f_col1, f_col2, f_col3 = st.columns(3)
+        st.markdown("### 🔍 Real-time Auto Filter Options")
+        filter_col1, filter_col2, filter_col3 = st.columns(3)
+        filter_col4, filter_col5 = st.columns(2)
         
-        with f_col1:
-            filter_action = st.multiselect("Action Filter", df_rep['action_type'].unique())
-        with f_col2:
-            filter_item = st.multiselect("Item Code Filter", df_rep['item_code'].unique())
-        with f_col3:
-            filter_invoice = st.multiselect("Invoice Filter", df_rep['invoice_no'].dropna().unique())
+        with filter_col1:
+            chosen_action = st.multiselect("Filter by Action Status (Issued/Returned/Fresh)", df_master_report['action_type'].unique())
+        with filter_col2:
+            chosen_item = st.multiselect("Filter by Product Line Name", df_master_report['product_name'].unique() if 'product_name' in df_master_report.columns else df_master_report['item_code'].unique())
+        with filter_col3:
+            chosen_recipient = st.multiselect("Filter by Recipient Name (Issued To)", df_master_report['issued_to'].dropna().unique())
+        with filter_col4:
+            chosen_invoice = st.multiselect("Filter by Invoice Tracking Code", df_master_report['invoice_no'].dropna().unique())
+        with filter_col5:
+            st.caption("Date parsing framework auto active")
             
-        # Apply Pandas Filters dynamically
-        df_filtered = df_rep.copy()
-        if filter_action:
-            df_filtered = df_filtered[df_filtered['action_type'].isin(filter_action)]
-        if filter_item:
-            df_filtered = df_filtered[df_filtered['item_code'].isin(filter_item)]
-        if filter_invoice:
-            df_filtered = df_filtered[df_filtered['invoice_no'].isin(filter_invoice)]
+        # Compile multi filter conditions dynamically on Pandas frame reference logic
+        df_filtered = df_master_report.copy()
+        
+        if chosen_action:
+            df_filtered = df_filtered[df_filtered['action_type'].isin(chosen_action)]
+        if chosen_item:
+            if 'product_name' in df_filtered.columns:
+                df_filtered = df_filtered[df_filtered['product_name'].isin(chosen_item)]
+            else:
+                df_filtered = df_filtered[df_filtered['item_code'].isin(chosen_item)]
+        if chosen_recipient:
+            df_filtered = df_filtered[df_filtered['issued_to'].isin(chosen_recipient)]
+        if chosen_invoice:
+            df_filtered = df_filtered[df_filtered['invoice_no'].isin(chosen_invoice)]
             
+        st.markdown("---")
         st.dataframe(df_filtered, use_container_width=True)
         
-        # Download Filtered Report
-        csv_rep = df_filtered.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Download Filtered Report", data=csv_rep, file_name="filtered_report.csv", mime="text/csv")
+        # Download data operation pipeline for filtered subsets
+        st.download_button(
+            label="📥 Export Current Filtered View to CSV Ledger File",
+            data=convert_df_to_csv(df_filtered),
+            file_name="filtered_inventory_report.csv",
+            mime="text/csv",
+            key="dl_filtered_report"
+        )
     else:
-        st.info("No transaction reports available.")
+        st.info("Ledger analytics parameters are blank. Try appending transactions mapping profiles first.")
