@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st  # <--- EI LINE-TA ABOSSHOI LAGBE
 import pandas as pd
 from supabase import create_client, Client
 import os
@@ -6,14 +6,12 @@ from datetime import datetime
 
 # --- LOGO PROVISION FOR ALL PAGES ---
 def add_logo():
-    # assets/logo.png thakle load hobe, naholay direct text dekhabe
     if os.path.exists("assets/logo.png"):
         st.sidebar.image("assets/logo.png", width=150)
     else:
         st.sidebar.title("📦 MY INVENTORY")
 
 # --- SUPABASE CONNECTION ---
-# Render-e deploy korle dynamic pull korbe env variable theke
 url = "https://emdjnndnsdebhbzebrsg.supabase.co"
 key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
 supabase: Client = create_client(url, key)
