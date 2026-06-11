@@ -123,7 +123,7 @@ if page == "Dashboard":
                         </div>
                     </div>
                     """, 
-                    unsafe_with_html=True
+                    unsafe_allow_html=True
                 )
         
         df_summary_download = pd.DataFrame(product_summaries)
