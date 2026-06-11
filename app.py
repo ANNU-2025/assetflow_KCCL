@@ -15,7 +15,7 @@ def add_logo():
 # --- SUPABASE CONNECTION ---
 # Render-e deploy korle dynamic pull korbe env variable theke
 url = "https://emdjnndnsdebhbzebrsg.supabase.co"
-key = "sb_publishable_LKxLwqQaHqI_FUF38Oui9A_hglCqaWF"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
 supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Inventory Management Template", layout="wide")
