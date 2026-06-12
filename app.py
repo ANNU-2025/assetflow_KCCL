@@ -1,3 +1,33 @@
+আপনার কোডটিতে মূলত **দুটি ছোট সিনট্যাক্স ভুল (Syntax Error)** আছে, যার কারণে স্ক্রিপ্টটি রান করছে না। নিচে ভুল দুটি এবং তার সমাধান দেওয়া হলো:
+
+### ১. লাইনে ২০০ (প্রধান ভুল):
+
+```python
+try:
+    st.sidebar.image("assets/logo.png", width=110)
+else: # <--- এখানে ভুল!
+    st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
+
+```
+
+Python-এ `try` ব্লকের সাথে সরাসরি `else` বসানো যায় না যদি না সেখানে একটি `except` ব্লক থাকে। আপনি যেহেতু ফাইলটি না থাকলে ফলব্যাক আইকন দেখাতে চাচ্ছেন, তাই `try-except` ব্যবহার করাই সবচেয়ে সঠিক।
+
+### ২. লাইনে ৩০২ (লুকানো ভুল):
+
+আপনি যখন `pid` ডিফাইন করেছেন, সেখানে লাইনের শেষে একটি ক্লোজিং ব্র্যাকেট `)` মিসিং ছিল:
+
+```python
+pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0] # <--- ক্লোজিং ব্র্যাকেট নেই
+
+```
+
+---
+
+### সম্পূর্ণ সংশোধিত এবং রেডি কোড:
+
+নিচের কোডটি কপি করে আপনার `app.py` ফাইলে পেস্ট করে দিন, সব এরর ঠিক হয়ে যাবে:
+
+```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
@@ -110,7 +140,7 @@ def load_data():
 def get_stock(dt, pid):
     if dt.empty:
         return 0.0
-    m = dt["product_id"].eq(pid)
+    m = dt[dt["product_id"].eq(pid)]
     up = pd.to_numeric(m[m["action_type"].eq("UPLOAD")]["quantity"], errors="coerce").fillna(0).sum()
     rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
@@ -197,8 +227,11 @@ st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
     try:
         st.sidebar.image("assets/logo.png", width=110)
-    else:
+    except Exception:
         st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
+else:
+    st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
+
 st.sidebar.markdown(
     '<div class="sb-logo-name">AssetFlow</div>'
     '<div class="sb-logo-sub">KCCL Operations</div></div>',
@@ -334,7 +367,6 @@ if page == "Dashboard":
             df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
-            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
             ec = [c for c in df_d.columns]
             st.download_button(
                 "Download Full Dump CSV",
@@ -365,7 +397,6 @@ if page == "Dashboard":
                 df_is["created_at"] = df_is["created_at"].apply(ind_dt)
                 df_is["Product"] = sel
                 df_is = explode_serials(df_is)
-                ec = ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no"]
                 ec = [c for c in df_is.columns]
                 safe_name = sel.lower().replace(" ", "_")
                 st.download_button(
@@ -430,7 +461,7 @@ elif page == "Transaction":
                 st.error(e)
             st.stop()
 
-        pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0]
+        pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
@@ -567,7 +598,6 @@ elif page == "Reports":
             df_ex = df_f.copy()
             df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             df_ex = explode_serials(df_ex)
-            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
             ec = [c for c in df_ex.columns]
             st.download_button(
                 "Export CSV",
@@ -581,7 +611,6 @@ elif page == "Reports":
         df_s = df_f.copy()
         df_s["created_at"] = df_s["created_at"].apply(ind_dt)
         df_s = explode_serials(df_s)
-        ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
         ec = [c for c in df_s.columns]
         df_s = df_s[ec].rename(columns={
             "created_at": "Date",
@@ -601,7 +630,6 @@ elif page == "Reports":
 # ==========================================
 # LOGOUT (TOP-RIGHT CORNER — KEEP FOR VISIBILITY
 # ==========================================
-# (NO sidebar logout — top-right corner)
 st.markdown("""
 <style>
 .top-logout{
@@ -613,11 +641,6 @@ font-size:12px;font-weight:600;cursor:pointer;transition:all .15s!important;disp
 .top-logout:hover{border-color:#EF4444!important;color:#FFFFFF!important;background:#3B18181!important;box-shadow:0 4px 12px rgba(239,68,68,.15)!important}
 </style>""", unsafe_allow_html=True)
 
-# ==========================================
-# REMOVE THE SIDEBAR LOGOUT (from sidebar) — so only top-right logout remains
-# ==========================================
-# The sidebar no longer has logout. Removed from sidebar code above.
-# The sidebar only has nav + logo now.
 st.markdown(
     """
     <style>
@@ -628,3 +651,5 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
+```
