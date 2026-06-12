@@ -168,7 +168,7 @@ if not st.session_state["logged_in"]:
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
         if os.path.exists("assets/logo.png"):
-            st.image("assets/logo.png", width=120, use_container_width=False)
+            st.image("assets/logo.png", width=120)
         else:
             st.markdown('<div class="login-icon">📦</div>', unsafe_allow_html=True)
         st.markdown(
@@ -201,7 +201,7 @@ st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 _logo_shown = False
 if os.path.exists("assets/logo.png"):
     try:
-        st.sidebar.image("assets/logo.png", width=110, use_container_width=False)
+        st.sidebar.image("assets/logo.png", width=110)
         _logo_shown = True
     except Exception:
         pass
