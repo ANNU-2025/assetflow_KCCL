@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 from supabase import create_client, Client
 import os
@@ -21,7 +20,7 @@ if not st.session_state["logged_in"]:
     st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# PRO MODE THEME
+# PRO MODE THEME — WHITE NAV, NO CLOCK, NO LOGOUT, NO ITEM CODE IN CARDS
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -31,18 +30,16 @@ header[data-testid="stHeader"]{height:0!important;min-height:0!important;padding
 section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important;overflow:hidden!important;overflow-y:hidden!important}
 section[data-testid="stSidebar"]>div:first-child{width:250px!important;overflow:hidden!important}
 #MainMenu,footer{visibility:hidden}
-.sb-logo{padding:18px 8px 0;text-align:center!important;border-bottom:1px solid #1E293B}
-.sb-logo img{border-radius:8px;max-width:130px!important;height:auto;display:block!important;margin:0 auto 8px auto!important}
+.sb-logo{padding:18px 8px 0;text-align:center!important;border-bottom:1px solid #1E293B;display:flex!important;flex-direction:column!important;align-items:center!important}
+.sb-logo img{border-radius:8px;max-width:130px!important;height:auto}
 .sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px;text-align:center}
 .sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;font-weight:700;text-align:center}
+.sb-fallback-icon{width:48px;height:48px;margin:0 auto 10px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:16px 20px 8px}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:3px!important;display:block!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div{padding:11px 20px!important;font-size:13.5px!important;font-weight:600!important;color:#CBD5E1!important;border-left:4px solid transparent!important;transition:all .15s!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div:hover{background:#1E293B!important;color:#FFFFFF!important}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="true"]>div{background:#111827!important;color:#38BDF8!important;border-left:4px solid #38BDF8!important;font-weight:700!important}
-.sb-logout{padding:0 14px 16px}
-.sb-logout button{width:100%;background:#1E293B!important;border:1px solid #475569!important;color:#F1F5F9!important;border-radius:8px;padding:8px 0!important;font-size:12px!important;font-weight:700!important;transition:all .15s!important}
-.sb-logout button:hover{border-color:#EF4444!important;color:#FFFFFF!important;background:#991B1B!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="true"]>div{background:#111827!important;color:#FFFFFF!important;border-left:4px solid #FFFFFF!important;font-weight:700!important}
 .stat-box{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:10px;padding:16px 18px;min-height:90px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .stat-lbl{font-size:10px;color:#475569!important;text-transform:uppercase;letter-spacing:1px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat-val{font-size:26px;font-weight:800;color:#0A0F1D!important;margin-top:4px;line-height:1}
@@ -50,8 +47,7 @@ section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="
 .p-card:hover{border-color:#2563EB;background:#F8FAFF;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.1)}
 .p-top{display:flex;align-items:center;gap:5px;overflow:hidden}
 .p-bottom{display:flex;align-items:flex-end;justify-content:space-between}
-.p-name{font-size:12px;font-weight:700;color:#0A0F1D!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-code{font-size:9px;color:#94A3B8!important;font-family:Courier New,monospace;margin-top:1px;white-space:nowrap;overflow:hidden}
+.p-name{font-size:13px;font-weight:700;color:#0A0F1D!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-stock{font-size:20px;font-weight:800;color:#16A34A!important;line-height:1;text-align:right}
 .p-total{font-size:10px;color:#475569!important;font-weight:600}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
@@ -86,6 +82,7 @@ input[type="date"]{background:#FFFFFF!important;color:#0A0F1D!important;border:2
 .stError{background:#FEF2F2!important;border:1px solid #FECACA!important;color:#991B1B!important;border-radius:8px!important}
 .login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08);text-align:center}
 .login-icon{width:64px;height:64px;margin:0 auto 16px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#FFFFFF;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.login-logo-wrap{display:flex;justify-content:center;margin-bottom:16px}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -161,16 +158,18 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# LOGIN
+# LOGIN — CENTERED WITH LOGO
 # ==========================================
 if not st.session_state["logged_in"]:
     _, mid, _ = st.columns([1.3, 1.4, 1.3])
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
+        st.markdown('<div class="login-logo-wrap">', unsafe_allow_html=True)
         if os.path.exists("assets/logo.png"):
             st.image("assets/logo.png", width=120)
         else:
             st.markdown('<div class="login-icon">📦</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         st.markdown(
             '<div style="font-size:22px;font-weight:800;color:#0A0F1D;letter-spacing:-.5px;margin-bottom:2px">'
             'AssetFlow KCCL</div>'
@@ -195,51 +194,24 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# SIDEBAR
+# SIDEBAR — LOGO (CENTERED) + NAV (WHITE ACTIVE) — NO CLOCK, NO LOGOUT
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
-_logo_shown = False
 if os.path.exists("assets/logo.png"):
     try:
         st.sidebar.image("assets/logo.png", width=110)
-        _logo_shown = True
     except Exception:
         pass
-if not _logo_shown:
-    st.sidebar.markdown(
-        '<div style="width:48px;height:48px;margin:0 auto 8px;background:linear-gradient(135deg,#0A0F1D,#1E293B);'
-        'border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;'
-        'box-shadow:0 4px 12px rgba(0,0,0,.3)">📦</div>',
-        unsafe_allow_html=True
-    )
+else:
+    st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
 st.sidebar.markdown(
     '<div class="sb-logo-name">AssetFlow</div>'
     '<div class="sb-logo-sub">KCCL Operations</div></div>',
     unsafe_allow_html=True
 )
 
-# Indian Time Clock
-components.html(
-    '<div style="text-align:center;padding:8px 0 12px;border-bottom:1px solid #1E293B;font-family:Inter,sans-serif">'
-    '<div style="font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:3px">System Time</div>'
-    '<div id="ist" style="font-size:15px;color:#38BDF8;font-weight:700;font-family:Courier New,monospace;letter-spacing:.5px"></div>'
-    '<div style="font-size:8px;color:#475569;margin-top:1px;letter-spacing:1px">IST (UTC+5:30)</div>'
-    '</div>'
-    '<script>'
-    'function u(){const n=new Date();document.getElementById("ist").innerText=n.toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true})}'
-    'u();setInterval(u,1000);'
-    '</script>',
-    height=72
-)
-
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
-st.sidebar.markdown('<div style="min-height:42vh"></div><hr style="border-color:#1E293B;margin:0">', unsafe_allow_html=True)
-st.sidebar.markdown('<div class="sb-logout">', unsafe_allow_html=True)
-if st.sidebar.button("Logout Session", key="sb_logout", use_container_width=True):
-    st.session_state["logged_in"] = False
-    st.rerun()
-st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # LOAD DATA
@@ -247,6 +219,11 @@ st.sidebar.markdown('</div>', unsafe_allow_html=True)
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
+
+# Product name map for exports
+p_name_map = {}
+if not df_p.empty:
+    p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
 # ==========================================
 # DASHBOARD
@@ -304,7 +281,6 @@ if page == "Dashboard":
     for _, row in df_p.iterrows():
         pid = row["id"]
         nm = row["product_name"]
-        code = row["item_code"]
         unit = row["default_unit"]
         total = safe_num(row.get("total_added_to_system", 0), 0)
         stk = get_stock(df_t, pid)
@@ -314,20 +290,18 @@ if page == "Dashboard":
 
         sum_rows.append({
             "Product Name": nm,
-            "Item Code": code,
             "In Stock": round(stk, 3),
             "Unit": unit,
             "Total Added": int(total)
         })
 
+        # Card — NO item code, just name + stock + total
         card_html = (
             '<div class="p-card">'
             '<div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
-            '<div>'
             '<div class="p-name">' + nm + '</div>'
-            '<div class="p-code">' + code + '</div>'
-            '</div></div>'
+            '</div>'
             '<div class="p-bottom">'
             '<div class="p-total">Total: ' + total_int + ' ' + unit + '</div>'
             '<div class="p-stock">' + stk_str + '</div>'
@@ -347,11 +321,15 @@ if page == "Dashboard":
         st.markdown('<p style="font-size:12px;font-weight:700;color:#0A0F1D;margin-bottom:6px">Full Ledger Audit Log</p>', unsafe_allow_html=True)
         if not df_t.empty:
             df_d = df_t.copy()
+            # Add product name instead of product_id
+            df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
+            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+            ec = [c for c in ec if c in df_d.columns]
             st.download_button(
                 "Download Full Dump CSV",
-                data=to_csv(df_d),
+                data=to_csv(df_d[ec]),
                 file_name="AssetFlow_FullDump_" + DT_STR + ".csv",
                 mime="text/csv",
                 key="d1"
@@ -378,7 +356,8 @@ if page == "Dashboard":
                 df_is["created_at"] = df_is["created_at"].apply(ind_dt)
                 df_is["Product"] = sel
                 df_is = explode_serials(df_is)
-                ec = [c for c in ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no"] if c in df_is.columns]
+                ec = ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no"]
+                ec = [c for c in ec if c in df_is.columns]
                 safe_name = sel.lower().replace(" ", "_")
                 st.download_button(
                     "Download " + sel + " Logs",
@@ -571,7 +550,8 @@ elif page == "Reports":
             df_ex = df_f.copy()
             df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             df_ex = explode_serials(df_ex)
-            ec = [c for c in ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"] if c in df_ex.columns]
+            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+            ec = [c for c in ec if c in df_ex.columns]
             st.download_button(
                 "Export CSV",
                 data=to_csv(df_ex[ec]),
@@ -584,7 +564,8 @@ elif page == "Reports":
         df_s = df_f.copy()
         df_s["created_at"] = df_s["created_at"].apply(ind_dt)
         df_s = explode_serials(df_s)
-        ec = [c for c in ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"] if c in df_s.columns]
+        ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+        ec = [c for c in ec if c in df_s.columns]
         df_s = df_s[ec].rename(columns={
             "created_at": "Date",
             "product_name": "Product",
