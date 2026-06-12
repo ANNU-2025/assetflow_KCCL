@@ -20,7 +20,7 @@ if not st.session_state["logged_in"]:
     st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# PRO MODE THEME — WHITE NAV, NO CLOCK, NO LOGOUT, NO ITEM CODE IN CARDS
+# THEME
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -30,16 +30,16 @@ header[data-testid="stHeader"]{height:0!important;min-height:0!important;padding
 section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important;overflow:hidden!important;overflow-y:hidden!important}
 section[data-testid="stSidebar"]>div:first-child{width:250px!important;overflow:hidden!important}
 #MainMenu,footer{visibility:hidden}
-.sb-logo{padding:18px 8px 0;text-align:center!important;border-bottom:1px solid #1E293B;display:flex!important;flex-direction:column!important;align-items:center!important}
+.sb-logo{padding:20px 8px 14px;text-align:center!important;border-bottom:1px solid #1E293B;display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important}
 .sb-logo img{border-radius:8px;max-width:130px!important;height:auto}
-.sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px;text-align:center}
-.sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;font-weight:700;text-align:center}
-.sb-fallback-icon{width:48px;height:48px;margin:0 auto 10px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
-.sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:16px 20px 8px}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:3px!important;display:block!important}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div{padding:11px 20px!important;font-size:13.5px!important;font-weight:600!important;color:#CBD5E1!important;border-left:4px solid transparent!important;transition:all .15s!important}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div:hover{background:#1E293B!important;color:#FFFFFF!important}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="true"]>div{background:#111827!important;color:#FFFFFF!important;border-left:4px solid #FFFFFF!important;font-weight:700!important}
+.sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px}
+.sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 20px 8px;text-align:center!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>div{display:flex!important;justify-content:center!important;padding:10px 20px!important;font-size:14px!important;font-weight:600!important;color:#CBD5E1!important;border-left:4px solid transparent!important;transition:all .15s!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>div:hover{background:#1E293B!important;color:#FFFFFF!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"][data-testid="stVerticalBlock"]>div[aria-checked="true"]{background:#111827!important;color:#FFFFFF!important;border-left:4px solid #FFFFFF!important;font-weight:700!important}
 .stat-box{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:10px;padding:16px 18px;min-height:90px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .stat-lbl{font-size:10px;color:#475569!important;text-transform:uppercase;letter-spacing:1px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat-val{font-size:26px;font-weight:800;color:#0A0F1D!important;margin-top:4px;line-height:1}
@@ -69,7 +69,6 @@ input[type="date"]{background:#FFFFFF!important;color:#0A0F1D!important;border:2
 [data-baseweb="select"]>div>ul>li[aria-selected="true"]{background:#EFF6FF!important;color:#2563EB!important}
 [data-baseweb="tag"]{background:#DBEAFE!important;border-radius:4px!important;color:#2563EB!important}
 .form-sec{font-size:11px;font-weight:700;color:#2563EB!important;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
-.form-wrap{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:10px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .hint{font-size:11px;color:#64748B!important;margin-top:-2px;margin-bottom:8px;font-weight:500}
 .dataframe{border:1px solid #CBD5E1!important;border-radius:8px!important;overflow:hidden;background:#FFFFFF!important}
 .dataframe th{background:#F8FAFC!important;color:#475569!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.5px;font-weight:700!important;border-bottom:2px solid #0A0F1D!important;padding:10px 14px!important}
@@ -80,9 +79,11 @@ input[type="date"]{background:#FFFFFF!important;color:#0A0F1D!important;border:2
 .stWarning{background:#FFFBEB!important;border:1px solid #FDE68A!important;color:#92400E!important;border-radius:8px!important}
 .stSuccess{background:#ECFDF5!important;border:1px solid #A7F3D0!important;color:#065F46!important;border-radius:8px!important}
 .stError{background:#FEF2F2!important;border:1px solid #FECACA!important;color:#991B1B!important;border-radius:8px!important}
-.login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08);text-align:center}
+.login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
 .login-icon{width:64px;height:64px;margin:0 auto 16px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#FFFFFF;box-shadow:0 8px 24px rgba(0,0,0,.2)}
-.login-logo-wrap{display:flex;justify-content:center;margin-bottom:16px}
+.login-logo-wrap{display:flex;justify-content:center;margin-bottom:20px;flex-direction:column;align-items:center;gap:6px}
+.login-logo-wrap img{border-radius:8px;max-width:140px}
+.login-header{text-align:center;margin-bottom:28px}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -158,7 +159,7 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# LOGIN — CENTERED WITH LOGO
+# LOGIN — Logo + Title + Subtitle on TOP, NO credential code
 # ==========================================
 if not st.session_state["logged_in"]:
     _, mid, _ = st.columns([1.3, 1.4, 1.3])
@@ -166,14 +167,15 @@ if not st.session_state["logged_in"]:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown('<div class="login-logo-wrap">', unsafe_allow_html=True)
         if os.path.exists("assets/logo.png"):
-            st.image("assets/logo.png", width=120)
+            st.image("assets/logo.png", width=140)
         else:
             st.markdown('<div class="login-icon">📦</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div style="font-size:22px;font-weight:800;color:#0A0F1D;letter-spacing:-.5px;margin-bottom:2px">'
-            'AssetFlow KCCL</div>'
-            '<div style="font-size:12px;color:#475569;margin-bottom:24px">Inventory Control Portal</div>',
+            '<div class="login-header">'
+            '<div style="font-size:24px;font-weight:800;color:#0A0F1D;letter-spacing:-.5px">AssetFlow KCCL</div>'
+            '<div style="font-size:13px;color:#475569;margin-top:4px">Inventory Control Portal</div>'
+            '</div>',
             unsafe_allow_html=True
         )
         with st.form("lf", clear_on_submit=False):
@@ -185,16 +187,11 @@ if not st.session_state["logged_in"]:
                     st.rerun()
                 else:
                     st.error("Invalid credentials!")
-        st.markdown(
-            '<div style="text-align:center;margin-top:14px">'
-            '<code style="font-size:11px;color:#0A0F1D;background:#E2E8F0;padding:4px 12px;border-radius:4px;font-weight:700">'
-            'admin / kccl@2026</code></div></div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
 # ==========================================
-# SIDEBAR — LOGO (CENTERED) + NAV (WHITE ACTIVE) — NO CLOCK, NO LOGOUT
+# SIDEBAR — Logo + Name + Nav only, NO clock/logout/spacer/hr
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
@@ -220,7 +217,6 @@ NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
-# Product name map for exports
 p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
@@ -295,7 +291,6 @@ if page == "Dashboard":
             "Total Added": int(total)
         })
 
-        # Card — NO item code, just name + stock + total
         card_html = (
             '<div class="p-card">'
             '<div class="p-top">'
@@ -321,7 +316,6 @@ if page == "Dashboard":
         st.markdown('<p style="font-size:12px;font-weight:700;color:#0A0F1D;margin-bottom:6px">Full Ledger Audit Log</p>', unsafe_allow_html=True)
         if not df_t.empty:
             df_d = df_t.copy()
-            # Add product name instead of product_id
             df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
@@ -404,7 +398,7 @@ elif page == "Transaction":
         if not serial.strip():
             errs.append("Serial Number is required.")
         if qty <= 0:
-            errs.append("Quantity must be greater than zero.")
+            errs.append("quantity must be greater than zero.")
         if action != "UPLOAD" and not issued_to.strip():
             errs.append("Issued To is required for ISSUE/RETURN.")
         if not invoice.strip():
@@ -414,7 +408,7 @@ elif page == "Transaction":
                 st.error(e)
             st.stop()
 
-        pid = int(df_p[df_p["product_name"] == sel_prod]["id"].values[0])
+        pid = int(df_p[df_p["product_name"] == sel_prod]["id"].values[0)
 
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
@@ -487,7 +481,7 @@ elif page == "Transaction":
                 st.error("DB Error: " + str(ex))
 
 # ==========================================
-# REPORTS
+# REPORTS — NO form-wrap box, just filters directly
 # ==========================================
 elif page == "Reports":
     if df_t.empty:
@@ -503,8 +497,7 @@ elif page == "Reports":
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
     mx = df_r["_d"].max() if df_r["_d"].notna().any() else NOW.date()
 
-    st.markdown('<div class="form-wrap">', unsafe_allow_html=True)
-    st.markdown('<div class="form-sec">Filter Criteria</div>', unsafe_allow_html=True)
+    st.markdown('<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns(5)
     with f1:
         df_ = st.date_input("From", value=mn, key="rf")
@@ -516,8 +509,8 @@ elif page == "Reports":
         im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
     with f5:
         st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
+
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
-    st.markdown('</div>', unsafe_allow_html=True)
 
     active = df_ != mn or dt_ != mx or it_ or im_ or st_ or iv_
     if not active:
