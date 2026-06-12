@@ -31,53 +31,55 @@ if not st.session_state["logged_in"]:
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 .stApp{background:#F0F2F5;color:#1F2937;font-family:'Inter',system-ui,sans-serif}
-.block-container{padding-top:1rem;padding-bottom:2rem;max-width:1440px;position:relative;z-index:1}
+.block-container{padding-top:.6rem;padding-bottom:1.5rem;max-width:1440px;position:relative;z-index:1}
 
-/* ===== SIDEBAR — Dark Navy ===== */
+/* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"]{background:#1A2332!important;border-right:1px solid #263245!important;width:220px!important;min-width:220px!important}
 section[data-testid="stSidebar"]>div:first-child{width:220px!important}
 #MainMenu{visibility:hidden}footer{visibility:hidden}
-header[data-testid="stHeader"]{background:#FFFFFF!important;border-bottom:1px solid #E5E7EB!important;box-shadow:0 1px 3px rgba(0,0,0,.05)!important}
+header[data-testid="stHeader"]{background:#F0F2F5!important;border-bottom:none!important;box-shadow:none!important}
 
 /* Sidebar logo */
-.sb-logo{padding:20px 16px 12px;text-align:center;border-bottom:1px solid #263245}
-.sb-logo-icon{width:44px;height:44px;margin:0 auto 10px;background:linear-gradient(135deg,#3B82F6,#2563EB);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,.3)}
+.sb-logo{padding:20px 16px 14px;text-align:center;border-bottom:1px solid #263245}
+.sb-logo-icon{width:46px;height:46px;margin:0 auto 10px;background:linear-gradient(135deg,#3B82F6,#2563EB);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,.3)}
 .sb-logo-name{font-size:15px;font-weight:700;color:#E5E7EB;letter-spacing:-.2px}
 .sb-logo-sub{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+.sb-logo img{border-radius:8px}
 
-/* Sidebar nav */
-.sb-nav-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 18px 6px}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
-section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div{padding:10px 18px!important;font-size:13px!important;font-weight:500!important;color:#94A3B8!important;border-radius:0!important;border-left:3px solid transparent!important;transition:all .15s!important;margin:0!important}
+/* Sidebar nav — more spacing */
+.sb-nav-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:16px 18px 8px}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:4px!important;display:block!important}
+section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div{padding:12px 18px!important;font-size:13px!important;font-weight:500!important;color:#94A3B8!important;border-radius:0!important;border-left:3px solid transparent!important;transition:all .15s!important;margin:0!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div:hover{background:#1E293B!important;color:#E2E8F0!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="true"]>div{background:#1E293B!important;color:#3B82F6!important;border-left:3px solid #3B82F6!important;font-weight:600!important}
 
-/* ===== MAIN CONTENT AREA ===== */
+/* Sidebar logout at bottom */
+.sb-spacer{min-height:50vh}
+.sb-logout{padding:0 14px 18px}
+.sb-logout button{width:100%;background:#1E293B!important;border:1px solid #263245!important;color:#94A3B8!important;border-radius:6px;padding:9px 0!important;font-size:12px!important;font-weight:500!important;transition:all .15s!important}
+.sb-logout button:hover{border-color:#EF4444!important;color:#EF4444!important;background:#2A1A1A!important}
+
+/* ===== CONTENT CARDS ===== */
 .content-card{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:20px 24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 
-/* Page header bar */
-.page-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.page-title{font-size:18px;font-weight:700;color:#1F2937}
-.page-breadcrumb{font-size:12px;color:#6B7280}
-.page-breadcrumb b{color:#3B82F6;font-weight:600}
-
 /* Stat cards */
-.stat-box{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat-box{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .sg::before{background:#3B82F6}
 .sb2::before{background:#10B981}
 .so::before{background:#F59E0B}
 .sy::before{background:#8B5CF6}
-.stat-lbl{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:4px}
-.stat-val{font-size:24px;font-weight:800;color:#1F2937;line-height:1}
+.stat-lbl{font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:3px}
+.stat-val{font-size:22px;font-weight:800;color:#1F2937;line-height:1}
 
-/* Product cards */
-.p-card{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:14px 16px;transition:all .15s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+/* Product cards — 16:9 ratio */
+.p-card{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:14px 16px;aspect-ratio:16/9;display:flex;flex-direction:column;justify-content:space-between;transition:all .15s;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .p-card:hover{border-color:#93C5FD;background:#F8FAFF;box-shadow:0 4px 12px rgba(59,130,246,.08)}
-.p-name{font-size:12.5px;font-weight:600;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-code{font-size:10px;color:#9CA3AF;font-family:'Courier New',monospace;margin:2px 0 8px}
-.p-stock{font-size:19px;font-weight:800;color:#10B981;line-height:1}
-.p-div{height:1px;background:#F3F4F6;margin:8px 0}
+.p-name{font-size:12px;font-weight:600;color:#1F2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-code{font-size:9.5px;color:#9CA3AF;font-family:'Courier New',monospace;margin:1px 0 0}
+.p-mid{flex:1;display:flex;align-items:center}
+.p-stock{font-size:18px;font-weight:800;color:#10B981;line-height:1}
+.p-div{height:1px;background:#F3F4F6}
 .p-total{font-size:10px;color:#9CA3AF}
 .p-total b{color:#6B7280}
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
@@ -101,23 +103,19 @@ section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="
 .b-r{background:#D1FAE5;color:#059669}
 .b-u{background:#DBEAFE;color:#2563EB}
 
-/* Form inputs — Corporate Style */
+/* ===== FORM INPUTS — ALL SAME WHITE ===== */
 .stTextInput>div>div>input,.stSelectbox>div>div>select,.stNumberInput>div>div>input,.stTextArea>div>div>textarea{background:#FFFFFF!important;color:#1F2937!important;border:1px solid #D1D5DB!important;border-radius:6px!important;font-size:13px!important;transition:all .15s}
 .stTextInput>div>div>input:focus,.stSelectbox>div>div>select:focus,.stNumberInput>div>div>input:focus{border-color:#3B82F6!important;box-shadow:0 0 0 3px rgba(59,130,246,.1)!important;outline:none!important}
+.stTextInput>div>div>input:disabled,.stNumberInput>div>div>input:disabled{background:#F9FAFB!important;color:#9CA3AF!important;border-color:#E5E7EB!important}
 .stTextArea>div>div>textarea{font-family:'Courier New',monospace!important;font-size:12px!important}
 input[type="date"]{background:#FFFFFF!important;color:#1F2937!important;border:1px solid #D1D5DB!important;border-radius:6px!important}
-.stTextInput>div>div>input:disabled,.stNumberInput>div>div>input:disabled{background:#F9FAFB!important;color:#9CA3AF!important;border-color:#E5E7EB!important}
-
-/* Labels */
-.stTextInput>label,.stSelectbox>label,.stNumberInput>label,.stTextArea>label{font-size:12px!important;font-weight:600!important;color:#374151!important}
+.stTextInput>label,.stSelectbox>label,.stNumberInput>label,.stTextArea>label,.stDateInput>label{font-size:12px!important;font-weight:600!important;color:#374151!important}
 
 /* Buttons */
 .stDownloadButton>button{background:#FFFFFF!important;border:1px solid #D1D5DB!important;color:#374151!important;border-radius:6px!important;font-weight:500!important;font-size:12px!important;transition:all .15s}
 .stDownloadButton>button:hover{border-color:#3B82F6!important;color:#3B82F6!important;background:#EFF6FF!important}
 .stButton>button[kind="primary"]{background:#3B82F6!important;color:#FFFFFF!important;border:none!important;border-radius:6px!important;font-weight:600!important;font-size:13px!important;transition:all .15s}
 .stButton>button[kind="primary"]:hover{background:#2563EB!important;box-shadow:0 4px 12px rgba(59,130,246,.25)!important}
-.stButton>button[kind="secondary"]{background:#FFFFFF!important;border:1px solid #D1D5DB!important;color:#374151!important;border-radius:6px!important;font-weight:500!important}
-.stButton>button[kind="secondary"]:hover{background:#F9FAFB!important;border-color:#9CA3AF!important}
 
 /* Dropdown scroll */
 [data-baseweb="select"]>div>ul{max-height:260px!important;overflow-y:auto!important;border-radius:6px!important;border:1px solid #D1D5DB!important;box-shadow:0 10px 30px rgba(0,0,0,.12)!important;background:#FFFFFF!important}
@@ -134,10 +132,6 @@ input[type="date"]{background:#FFFFFF!important;color:#1F2937!important;border:1
 /* Login */
 .login-card{background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;padding:44px 40px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
 .login-icon{width:64px;height:64px;margin:0 auto 18px;background:linear-gradient(135deg,#3B82F6,#2563EB);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 8px 24px rgba(59,130,246,.25)}
-
-/* Logout */
-.logout-btn{background:none;border:1px solid #D1D5DB;color:#6B7280;border-radius:6px;padding:5px 14px;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s}
-.logout-btn:hover{border-color:#EF4444;color:#EF4444;background:#FEF2F2}
 
 /* Alerts */
 .stInfo{background:#EFF6FF!important;border:1px solid #BFDBFE!important;color:#1D4ED8!important;border-radius:8px!important}
@@ -236,39 +230,41 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# SIDEBAR
+# SIDEBAR — LOGO + NAV + LOGOUT AT BOTTOM
 # ==========================================
-if os.path.exists("assets/logo.png"):
-    st.sidebar.markdown('<div class="sb-logo"><img src="data:image/png;base64,' + open("assets/logo.png","rb").read().hex() + '" style="width:90px;border-radius:8px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"><div class="sb-logo-name">AssetFlow</div><div class="sb-logo-sub">KCCL Inventory</div></div>', unsafe_allow_html=True)
-else:
-    st.sidebar.markdown('''<div class="sb-logo">
-    <div class="sb-logo-icon">📦</div>
-    <div class="sb-logo-name">AssetFlow</div>
-    <div class="sb-logo-sub">KCCL Inventory</div>
-    </div>''', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
+
+# Logo — reliable method
+_logo_shown = False
+try:
+    if os.path.exists("assets/logo.png"):
+        st.sidebar.image("assets/logo.png", width=90)
+        _logo_shown = True
+except:
+    pass
+
+if not _logo_shown:
+    st.sidebar.markdown('''<div class="sb-logo-icon" style="margin:0 auto 10px">📦</div>''', unsafe_allow_html=True)
+
+st.sidebar.markdown('<div class="sb-logo-name">AssetFlow</div><div class="sb-logo-sub">KCCL Inventory</div></div>', unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="sb-nav-label">Main Menu</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-# ==========================================
-# TOP BAR
-# ==========================================
-NOW = datetime.now()
-DT_STR = NOW.strftime("%d%b%Y")
-st.markdown(f'''<div class="page-bar">
-<div>
-<div class="page-title">{page}</div>
-<div class="page-breadcrumb">Home / <b>{page}</b></div>
-</div>
-<div>''', unsafe_allow_html=True)
-if st.button("Logout", key="top_logout"):
+# Spacer to push logout to bottom
+st.sidebar.markdown('<div class="sb-spacer"></div>', unsafe_allow_html=True)
+st.sidebar.markdown("---", unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sb-logout">', unsafe_allow_html=True)
+if st.sidebar.button("Logout", key="sb_logout", use_container_width=True):
     st.session_state["logged_in"] = False
     st.rerun()
-st.markdown('</div></div>', unsafe_allow_html=True)
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # LOAD DATA
 # ==========================================
+NOW = datetime.now()
+DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
 # ==========================================
@@ -305,7 +301,7 @@ if page == "Dashboard":
         dc = dot_cls(stk, total)
         sum_rows.append({"Product Name": nm, "Item Code": code, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total)})
         with cards[idx % 5]:
-            st.markdown(f'<div class="p-card"><div style="display:flex;align-items:center;gap:4px"><span class="dot {dc}"></span><div class="p-name">{nm}</div></div><div class="p-code">{code}</div><div class="p-stock">{stk:.2f}</div><div class="p-div"></div><div class="p-total">Total: <b>{int(total)} {unit}</b></div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="p-card"><div><div style="display:flex;align-items:center;gap:4px"><span class="dot {dc}"></span><div class="p-name">{nm}</div></div><div class="p-code">{code}</div></div><div class="p-mid"><div class="p-stock">{stk:.2f}</div></div><div><div class="p-div"></div><div class="p-total">Total: <b>{int(total)} {unit}</b></div></div></div>', unsafe_allow_html=True)
 
     df_sum = pd.DataFrame(sum_rows)
     st.markdown('<div class="sec-h">Export Data</div>', unsafe_allow_html=True)
