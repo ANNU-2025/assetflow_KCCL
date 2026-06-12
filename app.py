@@ -618,4 +618,13 @@ font-size:12px;font-weight:600;cursor:pointer;transition:all .15s!important;disp
 # ==========================================
 # The sidebar no longer has logout. Removed from sidebar code above.
 # The sidebar only has nav + logo now.
-</style>""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    .main {
+        background-color: #f0f2f6;
+    }
+    </style>
+    """, 
+    unsafe_allow_html=True
+)
