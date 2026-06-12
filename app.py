@@ -31,97 +31,97 @@ CLOCK_STR = NOW_IST.strftime("%H:%M:%S | %d-%b-%Y")
 # ==========================================
 # PRO-MODE ULTRA HIGH-CONTRAST ENGINE (CSS)
 # ==========================================
-st.markdown(f"""<style>
+st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* CRITICAL CONTRAST FIX: Pure Light Background & Absolute Deep Black Text */
-.stApp {{ background-color: #F8FAFC !important; }}
-.stApp *, div[data-testid="stMarkdownContainer"] p, label p, span, li {{
+.stApp { background-color: #F8FAFC !important; }
+.stApp *, div[data-testid="stMarkdownContainer"] p, label p, span, li {
     font-family: 'Inter', system-ui, sans-serif !important;
     color: #090D1A !important; /* Pitch Dark Text for Unmatched Contrast */
-}}
+}
 
-.block-container {{ padding: 1.5rem 2rem !important; max-width: 1600px; margin: 0 auto; }}
+.block-container { padding: 1.5rem 2rem !important; max-width: 1600px; margin: 0 auto; }
 
 /* ===== PERFECT HORIZONTAL & VERTICAL CENTER LOGIN ===== */
-.login-backdrop {{
+.login-backdrop {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-color: #F1F5F9; display: flex; align-items: center; justify-content: center; z-index: 9999;
-}}
-.login-card {{
+}
+.login-card {
     background: #FFFFFF; border: 2px solid #090D1A; border-radius: 16px;
     padding: 40px; width: 100%; max-width: 400px; text-align: center;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-}}
+}
 
 /* ===== LOCKDOWN NON-SCROLLABLE SIDEBAR ===== */
-section[data-testid="stSidebar"] {{ 
+section[data-testid="stSidebar"] { 
     background-color: #090D16 !important; /* Premium Absolute Obsidian Dark */
     border-right: 3px solid #1E293B !important; width: 260px !important; overflow: hidden !important; 
-}}
-section[data-testid="stSidebar"] > div:first-child {{ width: 260px !important; overflow: hidden !important; }}
+}
+section[data-testid="stSidebar"] > div:first-child { width: 260px !important; overflow: hidden !important; }
 
 /* Sidebar Elements Contrast Overrides (Dark BG -> Light/Neon Fonts) */
-.sb-clock-container {{ padding: 16px; text-align: center; border-bottom: 1px solid #1E293B; background: #111827; }}
-.sb-clock-lbl {{ font-size: 10px; color: #38BDF8 !important; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }}
-.sb-clock-val {{ font-size: 13px; color: #FFFFFF !important; font-weight: 700; margin-top: 4px; font-family: monospace !important; }}
+.sb-clock-container { padding: 16px; text-align: center; border-bottom: 1px solid #1E293B; background: #111827; }
+.sb-clock-lbl { font-size: 10px; color: #38BDF8 !important; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.sb-clock-val { font-size: 13px; color: #FFFFFF !important; font-weight: 700; margin-top: 4px; font-family: monospace !important; }
 
-.sb-logo {{ padding: 20px 10px; text-align: center; border-bottom: 1px solid #1E293B; display: flex; flex-direction: column; align-items: center; justify-content: center; }}
-.sb-logo-name {{ font-size: 20px; font-weight: 800; color: #FFFFFF !important; letter-spacing: -0.5px; margin-top: 4px; }}
-.sb-logo-sub {{ font-size: 11px; color: #38BDF8 !important; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }}
-.sb-logo img {{ border-radius: 8px; max-width: 140px !important; height: auto; margin: 0 auto !important; display: block; }}
+.sb-logo { padding: 20px 10px; text-align: center; border-bottom: 1px solid #1E293B; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.sb-logo-name { font-size: 20px; font-weight: 800; color: #FFFFFF !important; letter-spacing: -0.5px; margin-top: 4px; }
+.sb-logo-sub { font-size: 11px; color: #38BDF8 !important; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+.sb-logo img { border-radius: 8px; max-width: 140px !important; height: auto; margin: 0 auto !important; display: block; }
 
-.sb-nav-label {{ font-size: 11px; color: #64748B !important; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 20px 20px 6px; }}
-section[data-testid="stSidebar"] div[data-testid="stRadio"] > label > div {{ 
+.sb-nav-label { font-size: 11px; color: #64748B !important; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 20px 20px 6px; }
+section[data-testid="stSidebar"] div[data-testid="stRadio"] > label > div { 
     padding: 12px 24px !important; font-size: 14px !important; font-weight: 600 !important; color: #94A3B8 !important; 
-}}
-section[data-testid="stSidebar"] div[data-testid="stRadio"] > label > div:hover {{ background: #1E293B !important; color: #FFFFFF !important; }}
-section[data-testid="stSidebar"] div[data-testid="stRadio"] > label[aria-checked="true"] > div {{ 
+}
+section[data-testid="stSidebar"] div[data-testid="stRadio"] > label > div:hover { background: #1E293B !important; color: #FFFFFF !important; }
+section[data-testid="stSidebar"] div[data-testid="stRadio"] > label[aria-checked="true"] > div { 
     background: #111827 !important; color: #38BDF8 !important; border-left: 4px solid #38BDF8 !important; font-weight: 700 !important; 
 }
 
-.sb-logout {{ padding: 16px; }}
-.sb-logout button {{ 
+.sb-logout { padding: 16px; }
+.sb-logout button { 
     width: 100%; background: #1E293B !important; border: 1px solid #475569 !important; color: #FFFFFF !important; font-weight: 700 !important; border-radius: 8px;
-}}
-.sb-logout button:hover {{ background: #DC2626 !important; border-color: #DC2626 !important; }}
+}
+.sb-logout button:hover { background: #DC2626 !important; border-color: #DC2626 !important; }
 
 /* ===== UNIFORM TOP STAT BOXES ===== */
-.stat-box {{ background: #FFFFFF; border: 2px solid #090D1A; border-radius: 12px; padding: 16px; height: 105px !important; box-sizing: border-box; }}
-.stat-lbl {{ font-size: 11px; color: #475569 !important; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }}
-.stat-val {{ font-size: 26px; font-weight: 800; color: #090D1A !important; margin-top: 4px; }}
+.stat-box { background: #FFFFFF; border: 2px solid #090D1A; border-radius: 12px; padding: 16px; height: 105px !important; box-sizing: border-box; }
+.stat-lbl { font-size: 11px; color: #475569 !important; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.stat-val { font-size: 26px; font-weight: 800; color: #090D1A !important; margin-top: 4px; }
 
 /* ===== LIVE INVENTORY DISTRIBUTION SLIM CARDS ===== */
-.p-card {{ 
+.p-card { 
     background: #FFFFFF; border: 1px solid #94A3B8; border-radius: 8px; 
     padding: 10px 14px; height: 62px !important; display: flex; flex-direction: column; justify-content: space-between;
     box-shadow: 0 1px 2px rgba(0,0,0,0.02); box-sizing: border-box;
-}}
-.p-card-top {{ display: flex; align-items: center; gap: 4px; width: 100%; justify-content: space-between; }}
-.p-card-bottom {{ display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; }}
-.p-name {{ font-size: 13.5px; font-weight: 700; color: #090D1A !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }}
-.p-stock {{ font-size: 20px; font-weight: 800; color: #16A34A !important; line-height: 1; text-align: right; }}
-.p-total {{ font-size: 11px; color: #475569 !important; font-weight: 600; line-height: 1; }}
+}
+.p-card-top { display: flex; align-items: center; gap: 4px; width: 100%; justify-content: space-between; }
+.p-card-bottom { display: flex; align-items: flex-end; justify-content: space-between; width: 100%; margin-top: auto; }
+.p-name { font-size: 13.5px; font-weight: 700; color: #090D1A !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+.p-stock { font-size: 20px; font-weight: 800; color: #16A34A !important; line-height: 1; text-align: right; }
+.p-total { font-size: 11px; color: #475569 !important; font-weight: 600; line-height: 1; }
 
-.dot {{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; }}
-.dot-g {{ background: #16A34A; }} .dot-y { background: #D97706; } .dot-r { background: #DC2626; }
-.sec-h {{ font-size: 16px; font-weight: 800; color: #090D1A !important; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #090D1A; }}
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.dot-g { background: #16A34A; } .dot-y { background: #D97706; } .dot-r { background: #DC2626; }
+.sec-h { font-size: 16px; font-weight: 800; color: #090D1A !important; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #090D1A; }
 
 /* ===== SKY BLUE EXPORT BUTTONS INTERNAL OVERRIDE ===== */
-div[data-testid="stDownloadButton"] > button, .skyblue-btn button, .stDownloadButton > button {{
+div[data-testid="stDownloadButton"] > button, .skyblue-btn button, .stDownloadButton > button {
     background-color: #0EA5E9 !important; /* Premium Sky Blue */
     color: #FFFFFF !important; /* White Text */
     border: none !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 13px !important; 
     padding: 10px 16px !important; width: 100% !important; display: inline-flex !important; align-items: center; justify-content: center;
     box-shadow: 0 2px 4px rgba(14,165,233,0.2) !important; opacity: 1 !important; visibility: visible !important;
-}}
-div[data-testid="stDownloadButton"] > button:hover, .stDownloadButton > button:hover {{ background-color: #0284C7 !important; color: #FFFFFF !important; }}
+}
+div[data-testid="stDownloadButton"] > button:hover, .stDownloadButton > button:hover { background-color: #0284C7 !important; color: #FFFFFF !important; }
 
 /* Form Structure Layout Overrides */
-.stTextInput>div>div>input, .stSelectbox>div>div, .stNumberInput>div>div>input, .stTextArea>div>div>textarea {{
+.stTextInput>div>div>input, .stSelectbox>div>div, .stNumberInput>div>div>input, .stTextArea>div>div>textarea {
     background-color: #FFFFFF !important; border: 2px solid #64748B !important; border-radius: 6px !important; color: #090D1A !important; font-weight: 600 !important;
-}}
-.form-sec {{ font-size: 13px; font-weight: 700; color: #2563EB !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; border-left: 4px solid #2563EB; padding-left: 8px; }}
+}
+.form-sec { font-size: 13px; font-weight: 700; color: #2563EB !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; border-left: 4px solid #2563EB; padding-left: 8px; }
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -189,7 +189,7 @@ def explode_serials(df):
 # ABSOLUTE CENTERED SECURITY INTERACTION GATE
 # ==========================================
 if not st.session_state["logged_in"]:
-    st.markdown(f'''<div class="login-backdrop">
+    st.markdown('''<div class="login-backdrop">
     <div class="login-card">
         <div style="width:60px;height:60px;margin:0 auto 14px;background:linear-gradient(135deg,#0EA5E9,#2563EB);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;">📦</div>
         <div style="font-size:24px;font-weight:800;color:#090D1A;letter-spacing:-0.5px">AssetFlow KCCL</div>
@@ -291,7 +291,7 @@ if page == "Dashboard":
                     <span class="dot {dc}"></span>
                 </div>
                 <div class="p-card-bottom">
-                    <span class="p-total">Total: {int(total)}</span>
+                    <span class="p-total">Capacity: {int(total)}</span>
                     <span class="p-stock">{stk:.0f}</span>
                 </div>
             </div>''', unsafe_allow_html=True)
