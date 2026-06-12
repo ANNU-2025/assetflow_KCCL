@@ -34,34 +34,38 @@ CLOCK_STR = NOW_IST.strftime("%H:%M:%S | %d-%b-%Y")
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* CRITICAL CONTRAST FIX: Pure Light Background & Absolute Deep Black Text */
+/* Global Reset & Core Variables */
 .stApp { background-color: #F8FAFC !important; }
-.stApp *, div[data-testid="stMarkdownContainer"] p, label p, span, li {
+
+/* Dashboard Light Area Contrast Typography */
+h1, h2, h3, p, span, li, label p {
     font-family: 'Inter', system-ui, sans-serif !important;
-    color: #090D1A !important; /* Pitch Dark Text for Unmatched Contrast */
+    color: #090D1A !important;
 }
 
 .block-container { padding: 1.5rem 2rem !important; max-width: 1600px; margin: 0 auto; }
 
-/* ===== PERFECT HORIZONTAL & VERTICAL CENTER LOGIN ===== */
+/* ===== LOGIN VIEW CONTROL FIX ===== */
 .login-backdrop {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: #F1F5F9; display: flex; align-items: center; justify-content: center; z-index: 9999;
+    background-color: #F1F5F9; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
 }
 .login-card {
     background: #FFFFFF; border: 2px solid #090D1A; border-radius: 16px;
-    padding: 40px; width: 100%; max-width: 400px; text-align: center;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 36px; width: 100%; max-width: 400px; text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06); margin-bottom: 12px;
 }
+
+/* Ensure Form Inputs inside Login are fully rendered and visible */
+.login-card data-testid="stForm" { background: transparent !important; border: none !important; padding: 0 !important; }
 
 /* ===== LOCKDOWN NON-SCROLLABLE SIDEBAR ===== */
 section[data-testid="stSidebar"] { 
-    background-color: #090D16 !important; /* Premium Absolute Obsidian Dark */
-    border-right: 3px solid #1E293B !important; width: 260px !important; overflow: hidden !important; 
+    background-color: #090D16 !important; border-right: 3px solid #1E293B !important; width: 260px !important; overflow: hidden !important; 
 }
 section[data-testid="stSidebar"] > div:first-child { width: 260px !important; overflow: hidden !important; }
 
-/* Sidebar Elements Contrast Overrides (Dark BG -> Light/Neon Fonts) */
+/* Sidebar Component Internal Styles Override */
 .sb-clock-container { padding: 16px; text-align: center; border-bottom: 1px solid #1E293B; background: #111827; }
 .sb-clock-lbl { font-size: 10px; color: #38BDF8 !important; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
 .sb-clock-val { font-size: 13px; color: #FFFFFF !important; font-weight: 700; margin-top: 4px; font-family: monospace !important; }
@@ -72,6 +76,8 @@ section[data-testid="stSidebar"] > div:first-child { width: 260px !important; ov
 .sb-logo img { border-radius: 8px; max-width: 140px !important; height: auto; margin: 0 auto !important; display: block; }
 
 .sb-nav-label { font-size: 11px; color: #64748B !important; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 20px 20px 6px; }
+
+/* Sidebar Radio Buttons Design */
 section[data-testid="stSidebar"] div[data-testid="stRadio"] > label > div { 
     padding: 12px 24px !important; font-size: 14px !important; font-weight: 600 !important; color: #94A3B8 !important; 
 }
@@ -108,9 +114,8 @@ section[data-testid="stSidebar"] div[data-testid="stRadio"] > label[aria-checked
 .sec-h { font-size: 16px; font-weight: 800; color: #090D1A !important; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #090D1A; }
 
 /* ===== SKY BLUE EXPORT BUTTONS INTERNAL OVERRIDE ===== */
-div[data-testid="stDownloadButton"] > button, .skyblue-btn button, .stDownloadButton > button {
-    background-color: #0EA5E9 !important; /* Premium Sky Blue */
-    color: #FFFFFF !important; /* White Text */
+div[data-testid="stDownloadButton"] > button, .stDownloadButton > button {
+    background-color: #0EA5E9 !important; color: #FFFFFF !important;
     border: none !important; border-radius: 8px !important; font-weight: 700 !important; font-size: 13px !important; 
     padding: 10px 16px !important; width: 100% !important; display: inline-flex !important; align-items: center; justify-content: center;
     box-shadow: 0 2px 4px rgba(14,165,233,0.2) !important; opacity: 1 !important; visibility: visible !important;
@@ -189,24 +194,29 @@ def explode_serials(df):
 # ABSOLUTE CENTERED SECURITY INTERACTION GATE
 # ==========================================
 if not st.session_state["logged_in"]:
-    st.markdown('''<div class="login-backdrop">
-    <div class="login-card">
-        <div style="width:60px;height:60px;margin:0 auto 14px;background:linear-gradient(135deg,#0EA5E9,#2563EB);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;">📦</div>
-        <div style="font-size:24px;font-weight:800;color:#090D1A;letter-spacing:-0.5px">AssetFlow KCCL</div>
-        <div style="font-size:13px;color:#475569;margin-top:2px;margin-bottom:24px">Inventory Control Portal</div>
-    ''', unsafe_allow_html=True)
-    
-    with st.form("lf", clear_on_submit=False):
-        u = st.text_input("Username", placeholder="Username", label_visibility="collapsed")
-        p = st.text_input("Password", type="password", placeholder="Security Passphrase", label_visibility="collapsed")
-        if st.form_submit_button("Sign In Securely", use_container_width=True):
-            if u == "admin" and p == "kccl@2026":
-                st.session_state["logged_in"] = True
-                st.rerun()
-            else:
-                st.error("Invalid credentials!")
-                
-    st.markdown('<div style="text-align:center;margin-top:16px"><code style="font-size:11px;color:#090D1A;background:#E2E8F0;padding:4px 12px;border-radius:4px;font-weight:700">admin / kccl@2026</code></div></div></div>', unsafe_allow_html=True)
+    # Using Streamlit structural columns to center elements dynamically without DOM breakage
+    _, mid, _ = st.columns([1.3, 1.4, 1.3])
+    with mid:
+        st.markdown('<div style="margin-top:12vh;"></div>', unsafe_allow_html=True)
+        # Main Container
+        st.markdown('''
+        <div class="login-card" style="margin: 0 auto;">
+            <div style="width:60px;height:60px;margin:0 auto 14px;background:linear-gradient(135deg,#0EA5E9,#2563EB);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;">📦</div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:2px;">AssetFlow KCCL</div>
+            <div style="font-size:13px;color:#475569;margin-bottom:24px;">Inventory Control Portal</div>
+        ''', unsafe_allow_html=True)
+        
+        with st.form("lf", clear_on_submit=False):
+            u = st.text_input("Username", placeholder="Username", label_visibility="collapsed")
+            p = st.text_input("Password", type="password", placeholder="Security Passphrase", label_visibility="collapsed")
+            if st.form_submit_button("Sign In Securely", use_container_width=True):
+                if u == "admin" and p == "kccl@2026":
+                    st.session_state["logged_in"] = True
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials!")
+                    
+        st.markdown('<div style="text-align:center;margin-top:16px;"><code style="font-size:11px;background:#E2E8F0;padding:4px 12px;border-radius:4px;font-weight:700;">admin / kccl@2026</code></div></div>', unsafe_allow_html=True)
     st.stop()
 
 # ==========================================
@@ -300,18 +310,18 @@ if page == "Dashboard":
     st.markdown('<div class="sec-h">Data Extraction Hub</div>', unsafe_allow_html=True)
     d1, d2, d3 = st.columns(3)
     with d1:
-        st.markdown("<p style='font-size:13px;font-weight:700;color:#090D1A;margin-bottom:6px;'>Full Ledger Logs Dump</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:13px;font-weight:700;margin-bottom:6px;'>Full Ledger Logs Dump</p>", unsafe_allow_html=True)
         if not df_t.empty:
             df_d = df_t.copy()
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
             st.download_button("Download Full Dump CSV", data=to_csv(df_d), file_name=f"AssetFlow_FullDump_{DT_STR}.csv", mime="text/csv", key="d1")
     with d2:
-        st.markdown("<p style='font-size:13px;font-weight:700;color:#090D1A;margin-bottom:6px;'>System Balance Summary</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:13px;font-weight:700;margin-bottom:6px;'>System Balance Summary</p>", unsafe_allow_html=True)
         if not df_sum.empty:
             st.download_button("Download Summary CSV", data=to_csv(df_sum), file_name=f"AssetFlow_Summary_{DT_STR}.csv", mime="text/csv", key="d2")
     with d3:
-        st.markdown("<p style='font-size:13px;font-weight:700;color:#090D1A;margin-bottom:6px;'>Targeted Asset Log Extraction</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:13px;font-weight:700;margin-bottom:6px;'>Targeted Asset Log Extraction</p>", unsafe_allow_html=True)
         sel = st.selectbox("Select Target Product", df_p["product_name"].tolist(), key="cs", label_visibility="collapsed")
         if sel:
             tid = df_p[df_p["product_name"]==sel]["id"].values[0]
@@ -417,13 +427,13 @@ elif page == "Reports":
     with f1: df_ = st.date_input("Query Start Date", value=mn, key="rf")
     with f2: dt_ = st.date_input("Query End Date", value=mx, key="rt")
     with f3: it_ = st.multiselect("Query Assignee Entity", sorted(df_r["issued_to"].dropna().unique()), key="ri")
-    with f4: im_ = st.multiselect("Query Asset Class", sorted(df_p["product_name"].tolist()), key="rm")
+    with f4: im = st.multiselect("Query Asset Class", sorted(df_p["product_name"].tolist()), key="rm")
     with f5: st_ = st.multiselect("Query Flow State", ["ISSUE","RETURN","UPLOAD"], key="rs")
     
     st.markdown("<div style='margin-top: 8px;'></div>", unsafe_allow_html=True)
     iv_ = st.multiselect("Search Reference ID Framework", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
-    active = df_ != mn or dt_ != mx or it_ or im_ or st_ or iv_
+    active = df_ != mn or dt_ != mx or it_ or im or st_ or iv_
     if not active:
         st.info("Input query variables above to filter ledger entries.")
         st.stop()
@@ -432,14 +442,14 @@ elif page == "Reports":
     if df_ != mn: df_f = df_f[df_f["_d"] >= df_]
     if dt_ != mx: df_f = df_f[df_f["_d"] <= dt_]
     if it_: df_f = df_f[df_f["issued_to"].isin(it_)]
-    if im_: df_f = df_f[df_f["product_name"].isin(im_)]
+    if im: df_f = df_f[df_f["product_name"].isin(im)]
     if st_: df_f = df_f[df_f["action_type"].isin(st_)]
     if iv_: df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
     st.markdown("<div style='margin-top:16px;'></div>", unsafe_allow_html=True)
     r1, r2 = st.columns([2, 1])
     with r1:
-        st.markdown(f'<p style="font-size:14px;color:#090D1A;margin-top:12px;font-weight:700;">Query structurally returned <span style="color:#2563EB;">{len(df_f)}</span> log lines</p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="font-size:14px;margin-top:12px;font-weight:700;">Query structurally returned <span style="color:#2563EB;">{len(df_f)}</span> log lines</p>', unsafe_allow_html=True)
     with r2:
         if not df_f.empty:
             df_ex = df_f.copy()
