@@ -408,7 +408,7 @@ elif page == "Transaction":
                 st.error(e)
             st.stop()
 
-        pid = int(df_p[df_p["product_name"] == sel_prod]["id"].values[0)
+        pid = int(df_p[df_p["product_name"] == sel_prod]["id"].values[0])
 
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
