@@ -290,7 +290,8 @@ if page == "Dashboard":
         total_uploads = 0.0
         if not df_t.empty:
             total_uploads = pd.to_numeric(
-                df_t[(df_t["product_id"].eq(pid) & (df_t["action_type"].eq("UPLOAD"))]["quantity"], errors="coerce"
+                df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))]["quantity"], 
+                errors="coerce"
             ).fillna(0).sum()
 
         stk = get_stock(df_t, pid)
