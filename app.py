@@ -1,33 +1,3 @@
-আপনার কোডটিতে মূলত **দুটি ছোট সিনট্যাক্স ভুল (Syntax Error)** আছে, যার কারণে স্ক্রিপ্টটি রান করছে না। নিচে ভুল দুটি এবং তার সমাধান দেওয়া হলো:
-
-### ১. লাইনে ২০০ (প্রধান ভুল):
-
-```python
-try:
-    st.sidebar.image("assets/logo.png", width=110)
-else: # <--- এখানে ভুল!
-    st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
-
-```
-
-Python-এ `try` ব্লকের সাথে সরাসরি `else` বসানো যায় না যদি না সেখানে একটি `except` ব্লক থাকে। আপনি যেহেতু ফাইলটি না থাকলে ফলব্যাক আইকন দেখাতে চাচ্ছেন, তাই `try-except` ব্যবহার করাই সবচেয়ে সঠিক।
-
-### ২. লাইনে ৩০২ (লুকানো ভুল):
-
-আপনি যখন `pid` ডিফাইন করেছেন, সেখানে লাইনের শেষে একটি ক্লোজিং ব্র্যাকেট `)` মিসিং ছিল:
-
-```python
-pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0] # <--- ক্লোজিং ব্র্যাকেট নেই
-
-```
-
----
-
-### সম্পূর্ণ সংশোধিত এবং রেডি কোড:
-
-নিচের কোডটি কপি করে আপনার `app.py` ফাইলে পেস্ট করে দিন, সব এরর ঠিক হয়ে যাবে:
-
-```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
@@ -64,7 +34,7 @@ section[data-testid="stSidebar"]>div:first-child{width:250px!important;overflow:
 .sb-logo img{border-radius:8px;max-width:130px;height:48px}
 .sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px}
 .sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
-.sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.33)}
 .sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 20px 8px;text-align:center!important}
 /* FIX: Radio button expanded - no collapse */
 section[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
@@ -319,7 +289,6 @@ if page == "Dashboard":
         nm = row["product_name"]
         unit = row["default_unit"]
 
-        # FIX: Calculate TOTAL UPLOAD COUNT instead of total_added_to_system
         total_uploads = 0.0
         if not df_t.empty:
             total_uploads = pd.to_numeric(
@@ -628,7 +597,7 @@ elif page == "Reports":
         st.warning("No records match this filter.")
 
 # ==========================================
-# LOGOUT (TOP-RIGHT CORNER — KEEP FOR VISIBILITY
+# LOGOUT (TOP-RIGHT CORNER)
 # ==========================================
 st.markdown("""
 <style>
@@ -651,5 +620,3 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
-
-```
