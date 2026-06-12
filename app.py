@@ -110,7 +110,7 @@ def load_data():
 def get_stock(dt, pid):
     if dt.empty:
         return 0.0
-    m = dt[dt["product_id"].eq(pid)
+    m = dt["product_id"].eq(pid)
     up = pd.to_numeric(m[m["action_type"].eq("UPLOAD")]["quantity"], errors="coerce").fillna(0).sum()
     rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
