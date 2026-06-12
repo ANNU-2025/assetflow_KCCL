@@ -93,7 +93,11 @@ def dot_cls(stock, total):
     r = stock / total
     return "dot-g" if r > .5 else "dot-y" if r > .15 else "dot-r"
 
-def indian_dt(v):
+def ind_dt(v):
+    try: return pd.to_datetime(v).strftime("%d-%b-%Y %H:%M")
+    except: return str(v)
+
+def ind_date(v):
     try: return pd.to_datetime(v).strftime("%d-%b-%Y")
     except: return str(v)
 
@@ -137,9 +141,11 @@ st.sidebar.markdown("---")
 page = st.sidebar.radio("📌 Menu", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
 # ==========================================
-# LOAD DATA
+# LOAD DATA + NOW (সব page এ access পাবে)
 # ==========================================
 df_p, df_t = load_data()
+NOW = datetime.now()
+DT_STR = NOW.strftime("%d%b%Y")
 
 # ==========================================
 # DASHBOARD
@@ -153,12 +159,11 @@ if page == "Dashboard":
 
     # Stats
     ts = sum(get_stock(df_t, r["id"]) for _, r in df_p.iterrows())
-    now = datetime.now()
     im = rm = 0.0
     if not df_t.empty:
         df_t["created_at"] = pd.to_datetime(df_t["created_at"], errors="coerce")
         m = df_t.dropna(subset=["created_at"])
-        mk = (m["created_at"].dt.month == now.month) & (m["created_at"].dt.year == now.year)
+        mk = (m["created_at"].dt.month == NOW.month) & (m["created_at"].dt.year == NOW.year)
         im = safe_num(m[mk & (m["action_type"]=="ISSUE")]["quantity"].sum())
         rm = safe_num(m[mk & (m["action_type"]=="RETURN")]["quantity"].sum())
 
@@ -187,7 +192,19 @@ if page == "Dashboard":
         sum_rows.append({"Product Name": nm, "Item Code": code, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total)})
 
         with cards[idx % 4]:
-            st.markdown(f'<div class="inv-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span class="dot {dc}"></span><span style="font-size:13px;font-weight:600;color:#E6EDF3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{nm}</span></div><div style="font-size:11px;color:#484F58;font-family:monospace;margin-bottom:10px">{code}</div><div style="font-size:22px;font-weight:800;color:#E6EDF3;font-family:monospace">{stk:.3f}</div><div style="font-size:11px;color:#8B949E;margin-top:2px">Unit: {unit}</div><div style="height:1px;background:#1B2636;margin:8px 0"></div><div style="font-size:11px;color:#484F58">Total Added: <b style="color:#8B949E">{int(total)}</b></div></div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="inv-card">'
+                f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'
+                f'<span class="dot {dc}"></span>'
+                f'<span style="font-size:13px;font-weight:600;color:#E6EDF3">{nm}</span>'
+                f'</div>'
+                f'<div style="font-size:11px;color:#484F58;font-family:monospace;margin-bottom:10px">{code}</div>'
+                f'<div style="font-size:24px;font-weight:800;color:#E6EDF3;font-family:monospace">{stk:.3f}</div>'
+                f'<div style="height:1px;background:#1B2636;margin:8px 0"></div>'
+                f'<div style="font-size:11px;color:#484F58">Total Added: <b style="color:#8B949E">{int(total)} {unit}</b></div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
     df_sum = pd.DataFrame(sum_rows)
 
@@ -196,21 +213,23 @@ if page == "Dashboard":
 
     d1, d2, d3 = st.columns(3)
 
-    # 1. Full Dump
+    # 1. Full Dump — Indian datetime with name
     with d1:
         st.markdown("##### Full Dump")
         if not df_t.empty:
             df_dump = df_t.copy()
-            df_dump["created_at"] = df_dump["created_at"].apply(indian_dt)
-            st.download_button("📥 Download", data=to_csv(df_dump), file_name=f"full_dump_{now.strftime('%d%b%Y')}.csv", mime="text/csv", key="d1")
+            df_dump["created_at"] = df_dump["created_at"].apply(ind_dt)
+            fname = f"AssetFlow_FullDump_{DT_STR}.csv"
+            st.download_button("📥 Download", data=to_csv(df_dump), file_name=fname, mime="text/csv", key="d1")
 
-    # 2. Product Summary
+    # 2. Product Summary — Indian date
     with d2:
         st.markdown("##### Product Summary")
         if not df_sum.empty:
-            st.download_button("📥 Download", data=to_csv(df_sum), file_name="product_summary.csv", mime="text/csv", key="d2")
+            fname = f"AssetFlow_Summary_{DT_STR}.csv"
+            st.download_button("📥 Download", data=to_csv(df_sum), file_name=fname, mime="text/csv", key="d2")
 
-    # 3. Card Issued
+    # 3. Card Issued — Indian datetime with name
     with d3:
         st.markdown("##### Issued Details")
         sel = st.selectbox("Product", df_p["product_name"].tolist(), key="cs", label_visibility="collapsed")
@@ -218,10 +237,12 @@ if page == "Dashboard":
             tid = df_p[df_p["product_name"]==sel]["id"].values[0]
             df_is = df_t[(df_t["product_id"]==tid) & (df_t["action_type"]=="ISSUE")].copy()
             if not df_is.empty:
-                df_is["created_at"] = df_is["created_at"].apply(indian_dt)
+                df_is["created_at"] = df_is["created_at"].apply(ind_dt)
                 df_is["Product"] = sel
                 ec = [c for c in ["created_at","Product","item_code","serial_number","quantity","unit","issued_to","invoice_no"] if c in df_is.columns]
-                st.download_button("📥 Download", data=to_csv(df_is[ec]), file_name=f"{sel.lower().replace(' ','_')}_issued.csv", mime="text/csv", key="d3")
+                safe_name = sel.lower().replace(" ","_").replace("/","_")
+                fname = f"AssetFlow_{safe_name}_Issued_{DT_STR}.csv"
+                st.download_button("📥 Download", data=to_csv(df_is[ec]), file_name=fname, mime="text/csv", key="d3")
             else:
                 st.caption("No ISSUE records.")
 
@@ -250,7 +271,7 @@ elif page == "Transaction":
         issued_to = st.text_input("Issued To *", placeholder="Person or site name", key="ti")
         invoice = st.text_input("Invoice / DC No *", placeholder="e.g. INV-2025-042", key="tn")
         action = st.selectbox("Action *", ["ISSUE","RETURN","UPLOAD"], key="ta")
-        st.text_input("DateTime (Auto)", value=now.strftime("%d-%b-%Y  %H:%M:%S"), disabled=True, key="td")
+        st.text_input("DateTime (Auto)", value=NOW.strftime("%d-%b-%Y  %H:%M:%S"), disabled=True, key="td")
         st.markdown("<br>", unsafe_allow_html=True)
         submitted = st.button("⚡ Commit Transaction", use_container_width=True, type="primary")
 
@@ -310,11 +331,11 @@ elif page == "Reports":
     df_r["created_at"] = pd.to_datetime(df_r["created_at"], errors="coerce")
     df_r["_d"] = df_r["created_at"].dt.date
 
-    mn = df_r["_d"].min() if df_r["_d"].notna().any() else now.date()
-    mx = df_r["_d"].max() if df_r["_d"].notna().any() else now.date()
+    mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
+    mx = df_r["_d"].max() if df_r["_d"].notna().any() else NOW.date()
 
     st.markdown('<div class="sec-h">🔍 Filters</div>', unsafe_allow_html=True)
-    f1,f2,f3,f4,f5 = st.columns(5)
+    f1, f2, f3, f4, f5 = st.columns(5)
 
     with f1: df_ = st.date_input("From", value=mn, key="rf")
     with f2: dt_ = st.date_input("To", value=mx, key="rt")
@@ -324,7 +345,6 @@ elif page == "Reports":
 
     iv_ = st.multiselect("Invoice", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
-    # Only show when at least one filter is active
     active = df_ != mn or dt_ != mx or it_ or im_ or st_ or iv_
 
     if not active:
@@ -339,23 +359,28 @@ elif page == "Reports":
     if st_: df_f = df_f[df_f["action_type"].isin(st_)]
     if iv_: df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
-    r1, r2 = st.columns([1,1])
+    r1, r2 = st.columns([1, 1])
     with r1:
         st.markdown(f'Records: **<span style="color:#00E5A0">{len(df_f)}</span>**', unsafe_allow_html=True)
     with r2:
         if not df_f.empty:
             df_ex = df_f.copy()
-            df_ex["created_at"] = df_ex["created_at"].apply(indian_dt)
+            df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             ec = [c for c in ["created_at","product_name","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type"] if c in df_ex.columns]
-            st.download_button("📥 Export CSV", data=to_csv(df_ex[ec]), file_name=f"report_{now.strftime('%d%b%Y')}.csv", mime="text/csv", key="dr")
+            fname = f"AssetFlow_Report_{DT_STR}.csv"
+            st.download_button("📥 Export CSV", data=to_csv(df_ex[ec]), file_name=fname, mime="text/csv", key="dr")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     if not df_f.empty:
         df_s = df_f.copy()
-        df_s["created_at"] = df_s["created_at"].apply(indian_dt)
+        df_s["created_at"] = df_s["created_at"].apply(ind_dt)
         ec = [c for c in ["created_at","product_name","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type"] if c in df_s.columns]
-        df_s = df_s[ec].rename(columns={"created_at":"Date","product_name":"Product","item_code":"Code","serial_number":"Serial","quantity":"Qty","unit":"Unit","issued_to":"Issued To","invoice_no":"Invoice","action_type":"Action"})
+        df_s = df_s[ec].rename(columns={
+            "created_at":"Date","product_name":"Product","item_code":"Code",
+            "serial_number":"Serial","quantity":"Qty","unit":"Unit",
+            "issued_to":"Issued To","invoice_no":"Invoice","action_type":"Action"
+        })
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=420)
     else:
         st.warning("No records match this filter.")
