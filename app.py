@@ -31,31 +31,32 @@ if not st.session_state["logged_in"]:
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 .stApp{background:#F0F2F5;color:#1F2937;font-family:'Inter',system-ui,sans-serif}
-.block-container{padding-top:.6rem;padding-bottom:1.5rem;max-width:1440px;position:relative;z-index:1}
+.block-container{padding-top:.5rem;padding-bottom:1.5rem;max-width:1440px;position:relative;z-index:1}
 
-/* ===== SIDEBAR ===== */
-section[data-testid="stSidebar"]{background:#1A2332!important;border-right:1px solid #263245!important;width:220px!important;min-width:220px!important}
-section[data-testid="stSidebar"]>div:first-child{width:220px!important}
+/* ===== KILL TOP PANEL COMPLETELY ===== */
+header[data-testid="stHeader"]{height:0!important;min-height:0!important;padding:0!important;margin:0!important;overflow:hidden!important;border:none!important;box-shadow:none!important;visibility:hidden!important}
+
+/* ===== SIDEBAR — STATIC, NO SCROLL ===== */
+section[data-testid="stSidebar"]{background:#1A2332!important;border-right:1px solid #263245!important;width:220px!important;min-width:220px!important;overflow-y:hidden!important;overflow-x:hidden!important}
+section[data-testid="stSidebar"]>div:first-child{width:220px!important;overflow-y:hidden!important}
 #MainMenu{visibility:hidden}footer{visibility:hidden}
-header[data-testid="stHeader"]{background:#F0F2F5!important;border-bottom:none!important;box-shadow:none!important}
 
-/* Sidebar logo */
-.sb-logo{padding:20px 16px 14px;text-align:center;border-bottom:1px solid #263245}
-.sb-logo-icon{width:46px;height:46px;margin:0 auto 10px;background:linear-gradient(135deg,#3B82F6,#2563EB);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,.3)}
-.sb-logo-name{font-size:15px;font-weight:700;color:#E5E7EB;letter-spacing:-.2px}
-.sb-logo-sub{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
-.sb-logo img{border-radius:8px}
+/* Sidebar logo — centered, not squeezed */
+.sb-logo{padding:22px 10px 16px;text-align:center;border-bottom:1px solid #263245}
+.sb-logo-icon{width:48px;height:48px;margin:0 auto 12px;background:linear-gradient(135deg,#3B82F6,#2563EB);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(59,130,246,.3)}
+.sb-logo-name{font-size:16px;font-weight:700;color:#E5E7EB;letter-spacing:-.2px}
+.sb-logo-sub{font-size:9px;color:#64748B;text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
 
 /* Sidebar nav — more spacing */
-.sb-nav-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:16px 18px 8px}
+.sb-nav-label{font-size:9px;color:#475569;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:18px 18px 8px}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label{margin-bottom:4px!important;display:block!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div{padding:12px 18px!important;font-size:13px!important;font-weight:500!important;color:#94A3B8!important;border-radius:0!important;border-left:3px solid transparent!important;transition:all .15s!important;margin:0!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label>div:hover{background:#1E293B!important;color:#E2E8F0!important}
 section[data-testid="stSidebar"] div[data-testid="stRadio"]>label[aria-checked="true"]>div{background:#1E293B!important;color:#3B82F6!important;border-left:3px solid #3B82F6!important;font-weight:600!important}
 
 /* Sidebar logout at bottom */
-.sb-spacer{min-height:50vh}
-.sb-logout{padding:0 14px 18px}
+.sb-spacer{min-height:48vh}
+.sb-logout{padding:0 14px 20px}
 .sb-logout button{width:100%;background:#1E293B!important;border:1px solid #263245!important;color:#94A3B8!important;border-radius:6px;padding:9px 0!important;font-size:12px!important;font-weight:500!important;transition:all .15s!important}
 .sb-logout button:hover{border-color:#EF4444!important;color:#EF4444!important;background:#2A1A1A!important}
 
@@ -234,24 +235,22 @@ if not st.session_state["logged_in"]:
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 
-# Logo — reliable method
 _logo_shown = False
 try:
     if os.path.exists("assets/logo.png"):
-        st.sidebar.image("assets/logo.png", width=90)
+        st.sidebar.image("assets/logo.png", width=100, use_container_width=False)
         _logo_shown = True
 except:
     pass
 
 if not _logo_shown:
-    st.sidebar.markdown('''<div class="sb-logo-icon" style="margin:0 auto 10px">📦</div>''', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sb-logo-icon" style="margin:0 auto 12px">📦</div>', unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="sb-logo-name">AssetFlow</div><div class="sb-logo-sub">KCCL Inventory</div></div>', unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="sb-nav-label">Main Menu</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-# Spacer to push logout to bottom
 st.sidebar.markdown('<div class="sb-spacer"></div>', unsafe_allow_html=True)
 st.sidebar.markdown("---", unsafe_allow_html=True)
 st.sidebar.markdown('<div class="sb-logout">', unsafe_allow_html=True)
