@@ -105,9 +105,7 @@ st.markdown("""<style>
 header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
 #MainMenu, footer{visibility:hidden!important}
 
-/* ==========================================
-   SIDEBAR & RADIO SYSTEM — ALL WHITE TEXT
-   ========================================== */
+/* SIDEBAR SYSTEM */
 section[data-testid="stSidebar"] {
     background:#0B0F19!important;
     border-right:1px solid #1E293B!important;
@@ -118,7 +116,6 @@ section[data-testid="stSidebar"] > div:first-child {
     height: 100vh !important;
 }
 
-/* Sidebar Branding & Text Colors Forced White */
 .sb-header-title {
     font-size: 16px !important;
     font-weight: 700 !important;
@@ -132,7 +129,6 @@ section[data-testid="stSidebar"] > div:first-child {
     letter-spacing:1.5px!important;font-weight:700!important;padding:15px 0 5px 0!important;text-align:center!important;
 }
 
-/* Radio button elements styling */
 section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div {
     padding:10px 20px!important;border-left:4px solid transparent!important;
     transition:none!important;margin:0!important;
@@ -150,7 +146,6 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
     font-weight:700!important;
 }
 
-/* Pinned Logout Button Styling at bottom of sidebar */
 .sb-logout-box {
     margin-top: auto !important;
     padding: 20px !important;
@@ -172,7 +167,7 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
     box-shadow: 0 4px 12px rgba(220,38,38,0.2) !important;
 }
 
-/* UI Main Content boxes & Cards */
+/* UI DASHBOARD CARDS & WIDGETS */
 .stat-box {
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:14px!important;
     padding:20px 22px!important;min-height:100px!important;
@@ -184,12 +179,14 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
 
 .p-card{
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;
-    padding:14px 16px!important;display:flex!important;flex-direction:column!important;
-    justify-content:space-between!important;height:82px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;
+    padding:16px 18px!important;display:flex!important;flex-direction:column!important;
+    justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;
 }
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
+.p-top{display:flex!important;align-items:center!important;gap:8px!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-stock{font-size:22px;font-weight:800;color:#059669!important;line-height:1}
+.p-bottom{display:flex!important;flex-direction:column!important;gap:2px!important;margin-top:6px!important}
+.p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1}
 .p-total{font-size:11px;color:#64748B!important;font-weight:600}
 
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -214,7 +211,6 @@ st.sidebar.markdown('<div class="sb-header-title">KCCL Bangla</div>', unsafe_all
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-# Persistent Logout block safely attached to bottom container
 with st.sidebar:
     st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
     if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
@@ -223,15 +219,12 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# UNITS & CONFIG
+# CONFIG & INITIAL DATA LOAD
 # ==========================================
 UNITS = ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX", "KG", "GM", "SET", "PAIR", "ROLL", "CAN", "BOTTLE", "PACK", "SHEET", "BUNDLE", "TUBE", "GAL", "NOS", "KIT"]
 COLS_P = ["id", "product_name", "item_code", "default_unit", "total_added_to_system"]
 COLS_T = ["id", "product_id", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type", "created_at"]
 
-# ==========================================
-# HELPER FUNCTIONS
-# ==========================================
 @st.cache_data(ttl=60)
 def load_data():
     try:
@@ -298,7 +291,7 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# CORE CONTROLLERS
+# ROUTER & VIEWS
 # ==========================================
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
@@ -308,10 +301,10 @@ p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
-# --- Dashboard View ---
+# --- Dashboard Page ---
 if page == "Dashboard":
     if df_p.empty:
-        st.info("No master entries. Populate tpl_inv_products in backend.")
+        st.info("No master entries found.")
         st.stop()
 
     ts = 0.0
@@ -348,7 +341,7 @@ if page == "Dashboard":
         nm = row["product_name"]
         unit = row["default_unit"]
         
-        # FIXED count logic: Sum ONLY UPLOAD transactions from ledger safely
+        # Calculate strict total uploads for Added count
         total_uploads = 0.0
         if not df_t.empty:
             total_uploads = pd.to_numeric(
@@ -363,13 +356,14 @@ if page == "Dashboard":
 
         sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
+        # FIXED Layout: In stock restores at big font size, Added count stays below cleanly without text bleeding
         card_html = (
             '<div class="p-card"><div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
             '<div class="p-name">' + nm + '</div></div>'
             '<div class="p-bottom">'
+            '<div class="p-stock">' + stk_str + ' <span style="font-size:13px; font-weight:500; color:#64748B;">In Stock</span></div>'
             '<div class="p-total">Added: ' + total_int + ' ' + unit + '</div>'
-            '<div class="p-stock">' + stk_str + '</div>'
             '</div></div>'
         )
         with cards[idx % 5]:
@@ -410,7 +404,7 @@ if page == "Dashboard":
             else:
                 st.markdown('<p style="font-size:11px;color:#EF4444;margin-top:4px;font-weight:600">No issue records found.</p>', unsafe_allow_html=True)
 
-# --- Transaction View ---
+# --- Transaction Page ---
 elif page == "Transaction":
     if df_p.empty:
         st.warning("Add products to master catalog first.")
@@ -510,7 +504,7 @@ elif page == "Transaction":
             except Exception as ex:
                 st.error("DB Error: " + str(ex))
 
-# --- Reports View ---
+# --- Reports Page ---
 elif page == "Reports":
     if df_t.empty:
         st.info("No transaction data available.")
