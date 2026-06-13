@@ -8,7 +8,7 @@ from datetime import datetime
 # SUPABASE
 # ==========================================
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABSE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide", initial_sidebar_state="expanded")
@@ -20,26 +20,60 @@ if not st.session_state["logged_in"]:
     st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# THEME
+# THEME & CUSTOM CSS
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 .stApp{background:#F1F5F9!important;color:#0A0F1D!important;font-family:'Inter',system-ui,sans-serif!important}
 .block-container{padding:.8rem 2rem!important;max-width:1560px;margin:0 auto;position:relative;z-index:1}
 header[data-testid="stHeader"]{height:0!important;min-height:0!important;padding:0!important;overflow:hidden!important;border:none!important;box-shadow:none!important;visibility:hidden!important}
+
 section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important;overflow:hidden!important;overflow-y:hidden!important}
 section[data-testid="stSidebar"]>div:first-child{width:250px!important;overflow:hidden!important}
 #MainMenu,footer{visibility:hidden}
+
+/* Sidebar Logo Area */
 .sb-logo{padding:20px 8px 14px;text-align:center!important;border-bottom:1px solid #1E293B;display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important}
 .sb-logo img{border-radius:8px;max-width:130px!important;height:auto}
 .sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px}
 .sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
 .sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 20px 8px;text-align:center!important}
+
+/* ==========================================
+   FIXED: STREAMLIT RADIO / NAVIGATION LOOK
+   ========================================== */
 section[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
-section[data-testid="stRadio"]>div{display:flex!important;justify-content:center!important;padding:10px 20px!important;font-size:14px!important;font-weight:600!important;color:#CBD5E1!important;border-left:4px solid transparent!important;transition:all .15s!important}
-section[data-testid="stRadio"]>div:hover{background:#1E293B!important;color:#FFFFFF!important}
-section[data-testid="stRadio"][data-testid="stVerticalBlock"]>div[aria-checked="true"]{background:#111827!important;color:#FFFFFF!important;border-left:4px solid #FFFFFF!important;font-weight:700!important}
+
+/* Default container layout for radio buttons */
+section[data-testid="stRadio"] div[role="radiogroup"]>div {
+    padding: 2px 0px !important;
+    border-left: 4px solid transparent !important;
+    transition: none !important;
+}
+
+/* 1. All Radio Options Text - Permanent White always */
+section[data-testid="stRadio"] label p {
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+/* 2. Remove Hover backgrounds completely */
+section[data-testid="stRadio"] div[role="radiogroup"]>div:hover {
+    background: transparent !important;
+}
+
+/* 3. Selected / Active State — Left White Border line fixes permanently */
+section[data-testid="stRadio"] div[role="radiogroup"]>div[aria-checked="true"] {
+    background: #111827 !important;
+    border-left: 4px solid #FFFFFF !important;
+}
+section[data-testid="stRadio"] div[role="radiogroup"]>div[aria-checked="true"] label p {
+    font-weight: 700 !important;
+}
+
+/* Rest of the Dashboard UI Custom classes */
 .stat-box{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:10px;padding:16px 18px;min-height:90px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .stat-lbl{font-size:10px;color:#475569!important;text-transform:uppercase;letter-spacing:1px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat-val{font-size:26px;font-weight:800;color:#0A0F1D!important;margin-top:4px;line-height:1}
@@ -191,7 +225,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# SIDEBAR — Logo + Nav only, no clock/logout/spacer/hr
+# SIDEBAR
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
@@ -217,7 +251,6 @@ NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
-# Product name map for exports
 p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
@@ -489,7 +522,7 @@ elif page == "Transaction":
                 st.error("DB Error: " + str(ex))
 
 # ==========================================
-# REPORTS — No form-wrap box
+# REPORTS
 # ==========================================
 elif page == "Reports":
     if df_t.empty:
@@ -584,3 +617,13 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
+
+# ==========================================
+# FLOATING TOP LOGOUT BUTTON
+# ==========================================
+if st.session_state["logged_in"]:
+    st.markdown('<div class="top-logout">', unsafe_allow_html=True)
+    if st.button("Logout Session", key="top_logout_btn"):
+        st.session_state["logged_in"] = False
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
