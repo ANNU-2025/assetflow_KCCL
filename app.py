@@ -12,10 +12,11 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
+# PAGE CONFIG & SESSION PERSISTENCE
 # ==========================================
 st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide", initial_sidebar_state="expanded")
 
+# Initialize login state seamlessly
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
@@ -341,7 +342,6 @@ if page == "Dashboard":
         nm = row["product_name"]
         unit = row["default_unit"]
         
-        # Calculate strict total uploads for Added count
         total_uploads = 0.0
         if not df_t.empty:
             total_uploads = pd.to_numeric(
@@ -356,7 +356,6 @@ if page == "Dashboard":
 
         sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
-        # FIXED Layout: In stock restores at big font size, Added count stays below cleanly without text bleeding
         card_html = (
             '<div class="p-card"><div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
@@ -443,6 +442,7 @@ elif page == "Transaction":
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
+        # FIXED: Comma parsing handles exact splits for multiple unique records
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
             serials = [s.strip() for s in serial.split(",") if s.strip()]
@@ -468,41 +468,48 @@ elif page == "Transaction":
                 load_data.clear()
                 st.rerun()
         else:
-            ic = item_code.strip()
-            sn = serial.strip()
+            # FIXED: Splits bulk comma requests for multi-issue or multi-return routines smoothly
+            codes = [c.strip() for c in item_code.split(",") if c.strip()]
+            serials = [s.strip() for s in serial.split(",") if s.strip()]
+            
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
-                if ic not in uploads["item_code"].values:
-                    st.error("Item Code '" + ic + "' not found in uploads!")
-                    st.stop()
-                if sn:
-                    match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
-                    if match.empty:
-                        st.error("Serial '" + sn + "' not found for '" + ic + "'!")
+                for i, ic in enumerate(codes):
+                    sn = serials[i] if i < len(serials) else ""
+                    if ic not in uploads["item_code"].values:
+                        st.error("Item Code '" + ic + "' not found in uploads!")
                         st.stop()
+                    if sn:
+                        match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
+                        if match.empty:
+                            st.error("Serial '" + sn + "' not found for '" + ic + "'!")
+                            st.stop()
             
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
-                if qty > cs:
-                    st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
+                if (qty * len(codes)) > cs:
+                    st.error("Insufficient stock! Total requested: " + "{:.3f}".format(qty * len(codes)) + " " + unit)
                     st.stop()
 
-            payload = {
-                "product_id": pid, "item_code": ic, "serial_number": sn,
-                "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
-                "invoice_no": invoice.strip(), "action_type": action,
-                "created_at": datetime.now().isoformat()
-            }
-            try:
-                res = supabase.table("tpl_inv_transactions").insert(payload).execute()
-                if res.data:
-                    st.success("Committed: " + action + " " + "{:.3f}".format(qty) + " " + unit + " - " + ic)
-                    load_data.clear()
-                    st.rerun()
-                else:
-                    st.error("Insert failed. Check RLS.")
-            except Exception as ex:
-                st.error("DB Error: " + str(ex))
+            ok = 0
+            for i, code in enumerate(codes):
+                sn = serials[i] if i < len(serials) else ""
+                payload = {
+                    "product_id": pid, "item_code": code, "serial_number": sn,
+                    "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
+                    "invoice_no": invoice.strip(), "action_type": action,
+                    "created_at": datetime.now().isoformat()
+                }
+                try:
+                    res = supabase.table("tpl_inv_transactions").insert(payload).execute()
+                    if res.data: ok += 1
+                except Exception as ex:
+                    st.error("DB insertion failed for code " + code + ": " + str(ex))
+                    
+            if ok > 0:
+                st.success("Successfully processed " + action + " sequence for " + str(ok) + " item(s).")
+                load_data.clear()
+                st.rerun()
 
 # --- Reports Page ---
 elif page == "Reports":
