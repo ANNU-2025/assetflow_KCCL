@@ -19,8 +19,12 @@ st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide",
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
+# FIX: পেজ রিফ্রেশ করলেও লগইন থাকবে (URL এ টোকেন থাকবে)
+if not st.session_state["logged_in"] and st.query_params.get("auth") == "1":
+    st.session_state["logged_in"] = True
+
 # ==========================================
-# LOGIN PAGE — CLEAN "KCCL BANGLA" CENTERED
+# LOGIN PAGE — ONLY USERNAME, PASSWORD & SIGN IN
 # ==========================================
 if not st.session_state["logged_in"]:
 
@@ -31,7 +35,6 @@ if not st.session_state["logged_in"]:
     footer{visibility:hidden!important}
     #MainMenu{visibility:hidden!important}
     .stApp{background:#F1F5F9!important}
-
     .block-container{
         max-width:100%!important;
         padding-top:0!important;
@@ -46,51 +49,43 @@ if not st.session_state["logged_in"]:
     }
     .block-container > div > div > div > div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"]{
         width:100%;
-        max-width:440px;
+        max-width:420px;
     }
     .lc{
         background:#fff!important;
-        border-radius:24px!important;
-        padding:50px 40px 40px!important;
+        border-radius:20px!important;
+        padding:40px 36px 36px!important;
         box-shadow:0 25px 60px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)!important;
         text-align:center!important;
     }
     .lt{
-        font-size:32px!important;
+        font-size:26px!important;
         font-weight:900!important;
         color:#0B0F19!important;
-        letter-spacing:-1px!important;
-        margin:0 0 6px 0!important;
-        font-family:'Inter',sans-serif!important;
-    }
-    .ls{
-        font-size:13px!important;
-        color:#64748B!important;
-        font-weight:500!important;
-        margin:0 0 36px 0!important;
+        letter-spacing:-.5px!important;
+        margin:0 0 30px 0!important;
         font-family:'Inter',sans-serif!important;
     }
     .lc [data-testid="stTextInput"] label p{color:#334155!important;font-size:12px!important;font-weight:700!important;text-align:left!important}
     .lc [data-testid="stTextInput"] > div > div > input{background:#F8FAFC!important;border:2px solid #E2E8F0!important;border-radius:12px!important;color:#0F172A!important;font-size:14px!important}
     .lc [data-testid="stTextInput"] > div > div > input:focus{border-color:#0EA5E9!important;box-shadow:0 0 0 3px rgba(14,165,233,0.12)!important}
     .lc [data-testid="stFormSubmitButton"] button{background:#0B0F19!important;color:#fff!important;border:none!important;border-radius:12px!important;font-weight:700!important;font-size:14px!important;padding:14px!important;width:100%!important;margin-top:8px!important;font-family:'Inter',sans-serif!important;transition:all .2s!important}
-    .lc [data-testid="stFormSubmitButton"] button:hover{background:#1E293B!important;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.15)!important}
+    .lc [data-testid="stFormSubmitButton"] button:hover{background:#1E293B!important;box-shadow:0 4px 12px rgba(0,0,0,0.15)!important}
     .lc [data-testid="stException"]{background:#FEF2F2!important;color:#DC2626!important;border:1px solid #FECACA!important;border-radius:12px!important;padding:12px 16px!important;font-size:13px!important;font-weight:600!important;text-align:left!important}
     </style>""", unsafe_allow_html=True)
 
     _, mid, _ = st.columns([1, 1.2, 1])
     with mid:
         st.markdown('<div class="lc">', unsafe_allow_html=True)
-        # শুধু টেক্সট, কোনো ইমেজ নেই
         st.markdown('<div class="lt">KCCL Bangla</div>', unsafe_allow_html=True)
-        st.markdown('<div class="ls">Inventory Control Portal</div>', unsafe_allow_html=True)
         with st.form("lf", clear_on_submit=False):
             u = st.text_input("Username", placeholder="Enter username", label_visibility="visible")
             p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="visible")
-            submitted = st.form_submit_button("Authenticate Sign In", use_container_width=True, type="primary")
+            submitted = st.form_submit_button("Sign In", use_container_width=True, type="primary")
             if submitted:
                 if u == "admin" and p == "kccl@2026":
                     st.session_state["logged_in"] = True
+                    st.query_params["auth"] = "1"  # URL এ টোকেন সেভ করা হলো
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
@@ -99,7 +94,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# MAIN APP CSS — DARK NARROW SIDEBAR + SOLID MAIN
+# MAIN APP CSS — DARK SIDEBAR + LIGHT MAIN
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -109,34 +104,46 @@ header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
 #MainMenu{visibility:hidden!important}
 footer{visibility:hidden!important}
 
-/* SIDEBAR — DARK & NARROW (220px) */
+/* SIDEBAR — DARK & ALL TEXT WHITE */
 section[data-testid="stSidebar"]{
     background:#0B0F19!important;
     border-right:1px solid #1E293B!important;
-    width:220px!important;
-    min-width:220px!important;
-    transition:all .2s!important;
+    position:relative!important;
 }
 section[data-testid="stSidebar"] > div{
-    padding-top:12px!important;
+    padding-top:0px!important;
     position:relative!important;
     min-height:100vh!important;
     display:flex!important;
     flex-direction:column!important;
 }
+/* Force all sidebar text to be white */
+section[data-testid="stSidebar"] label p,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span {
+    color:#FFFFFF!important;
+}
 
-/* SIDEBAR RADIO — BOLD & BROADER */
+/* SIDEBAR TOP TEXT */
+.sb-top-text{
+    text-align:center!important;
+    padding:28px 0 24px 0!important;
+    border-bottom:1px solid #1E293B!important;
+    margin:0 20px 20px 20px!important;
+}
+
+/* SIDEBAR RADIO — BOLD WHITE */
 section[data-testid="stSidebar"] section[data-testid="stRadio"]{background:transparent!important}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"]{gap:4px!important;padding:0 12px!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"]{gap:6px!important;padding:0 16px!important}
 section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div{
-    padding:11px 16px!important;
+    padding:12px 16px!important;
     border-left:4px solid transparent!important;
     border-radius:8px!important;
     transition:all .15s!important;
     margin:0!important;
 }
 section[data-testid="stSidebar"] section[data-testid="stRadio"] label p{
-    color:#94A3B8!important;
+    color:#FFFFFF!important;
     font-size:14px!important;
     font-weight:800!important;
     letter-spacing:.2px!important;
@@ -153,67 +160,53 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
     font-weight:800!important;
 }
 
-/* LOGOUT BUTTON */
+/* LOGOUT BUTTON — STICKED TO BOTTOM */
 .sidebar-logout{
     position:absolute!important;
     bottom:0!important;
     left:0!important;
     width:100%!important;
-    padding:16px!important;
+    padding:20px!important;
     border-top:1px solid #1E293B!important;
     background:#0B0F19!important;
 }
 .sidebar-logout button{
     width:100%!important;
     background:transparent!important;
-    color:#EF4444!important;
-    border:1px solid #EF4444!important;
+    color:#FFFFFF!important;
+    border:1px solid #475569!important;
     border-radius:10px!important;
     font-weight:700!important;
     font-size:13px!important;
-    padding:9px!important;
+    padding:10px!important;
     transition:all .2s!important;
 }
 .sidebar-logout button:hover{
     background:#EF4444!important;
     color:#FFFFFF!important;
+    border-color:#EF4444!important;
     box-shadow:0 4px 12px rgba(239,68,68,0.3)!important;
 }
 
-/* STAT BOXES — SOLID FEEL WITH LEFT ACCENT */
+/* STAT BOXES */
 .stat-box{
-    background:#fff!important;
-    border:1px solid #E2E8F0!important;
-    border-left:5px solid #0EA5E9!important;
-    border-radius:14px!important;
-    padding:22px 24px!important;
-    min-height:105px!important;
-    display:flex!important;
-    flex-direction:column!important;
-    justify-content:center!important;
+    background:#fff!important;border:1px solid #E2E8F0!important;border-left:5px solid #0EA5E9!important;
+    border-radius:14px!important;padding:22px 24px!important;min-height:105px!important;
+    display:flex!important;flex-direction:column!important;justify-content:center!important;
     box-shadow:0 1px 3px rgba(0,0,0,0.03),0 8px 20px rgba(0,0,0,0.03)!important;
-    color:#0F172A!important;
-    transition:transform .2s,box-shadow .2s!important;
+    color:#0F172A!important;transition:transform .2s,box-shadow .2s!important;
 }
 .stat-box:hover{transform:translateY(-3px)!important;box-shadow:0 12px 28px rgba(0,0,0,0.06)!important}
 .stat-lbl{font-size:11px!important;color:#64748B!important;text-transform:uppercase!important;letter-spacing:1.2px!important;font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 .stat-val{font-size:32px!important;font-weight:900!important;margin-top:6px!important;line-height:1!important;color:#0B0F19!important;letter-spacing:-.5px!important}
 
-/* PRODUCT CARDS — SOLID & CLEAN */
+/* PRODUCT CARDS */
 .p-card{
-    background:#fff!important;
-    border:1px solid #E2E8F0!important;
-    border-radius:14px!important;
-    padding:16px 18px!important;
-    display:flex!important;
-    flex-direction:column!important;
-    justify-content:space-between!important;
-    height:88px!important;
+    background:#fff!important;border:1px solid #E2E8F0!important;border-radius:14px!important;
+    padding:16px 18px!important;display:flex!important;flex-direction:column!important;
+    justify-content:space-between!important;height:88px!important;
     box-shadow:0 1px 2px rgba(0,0,0,0.02),0 4px 10px rgba(0,0,0,0.02)!important;
-    transition:all .2s!important;
-    color:#0F172A!important;
-    position:relative!important;
-    overflow:hidden!important;
+    transition:all .2s!important;color:#0F172A!important;
 }
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-3px)!important;box-shadow:0 12px 24px rgba(14,165,233,0.12)!important}
 .p-top{display:flex;align-items:center;gap:8px;overflow:hidden}
@@ -259,14 +252,16 @@ label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>l
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR — STRIPPED DOWN & NARROW
+# SIDEBAR LAYOUT — TOP TEXT, RADIOS, BOTTOM LOGOUT
 # ==========================================
+st.sidebar.markdown('<div class="sb-top-text"><span style="color:#fff;font-size:20px;font-weight:900;letter-spacing:-.5px;">KCCL Bangla</span></div>', unsafe_allow_html=True)
+
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-# Logout Button at bottom
 st.sidebar.markdown('<div class="sidebar-logout">', unsafe_allow_html=True)
-if st.sidebar.button("🚪 Logout", key="logout_btn"):
+if st.sidebar.button("Logout", key="logout_btn"):
     st.session_state["logged_in"] = False
+    st.query_params.pop("auth", None)  # URL থেকে টোকেন মুছে ফেলা হলো
     st.rerun()
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
@@ -384,10 +379,10 @@ if page == "Dashboard":
     for _, row in df_p.iterrows():
         pid = row["id"]; nm = row["product_name"]; unit = row["default_unit"]
         
-        # TOTAL ADDED: শুধু UPLOAD এ বাড়বে, ISSUE/RETURN এ কমবে না (পয়েন্ট ৪)
+        # ADDED: শুধুমাত্র মোট Upload কাউন্ট (Issue/Return এ কমবে না)
         total = safe_num(row.get("total_added_to_system", 0), 0)
         
-        # CURRENT STOCK: আসল ব্যালেন্স (Upload + Return - Issue)
+        # CURRENT STOCK: আসল ব্যালেন্স
         stk = get_stock(df_t, pid)
         dc = dot_cls(stk, total)
         stk_str = "{:.0f}".format(stk)
