@@ -28,9 +28,7 @@ st.markdown("""<style>
 .stApp{background:#F1F5F9!important;color:#0A0F1D!important;font-family:'Inter',system-ui,sans-serif!important}
 .block-container{padding:.8rem 2rem!important;max-width:1560px;margin:0 auto;position:relative;z-index:1}
 
-/* Clean Header styling instead of completely crushing heights to 0 */
 header[data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
-
 section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important}
 #MainMenu,footer{visibility:hidden}
 .sb-logo{text-align:left!important;align-items:flex-start!important;padding:18px 14px 14px!important}
@@ -40,7 +38,6 @@ section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px s
 .sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.33)}
 .sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 20px 8px;text-align:center!important}
 
-/* Radio button UI fixes */
 section[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
 section[data-testid="stRadio"]>div{white-space:normal!important;overflow:visible!important;text-overflow:visible!important;height:auto!important;min-height:44px!important;justify-content:center!important}
 section[data-testid="stVerticalBlock"]>label>div{white-space:normal!important;overflow:visible!important;text-overflow:visible!important;height:auto!important;min-height:44px!important;justify-content:center!important}
@@ -76,7 +73,6 @@ input[type="date"]{background:#FFFFFF!important;color:#0A0F1D!important;border:2
 .dataframe th{background:#F8FAFC!important;color:#475569!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.5px;font-weight:700!important;border-bottom:2px solid #0A0F1D!important;padding:10px 14px!important}
 .dataframe td{color:#0A0F1D!important;font-size:12.5px!important;border-bottom:1px solid #F1F5F9!important;padding:9px 14px!important}
 
-/* Login Panel Centering Fixes */
 .login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08);margin-top: 30px;}
 .login-icon{width:64px;height:64px;margin:0 auto 16px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#FFFFFF;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .login-logo-wrap{display:flex;justify-content:center!important;margin-bottom:20px;align-items:center;width:100%}
@@ -95,17 +91,21 @@ UNITS = ["PCS","LTR","ML","MTR","DRUM","BOX","KG","GM","SET","PAIR","ROLL","CAN"
 COLS_P = ["id","product_name","item_code","default_unit","total_added_to_system"]
 COLS_T = ["id","product_id","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type","created_at"]
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=5) # Debugging এর সুবিধার্থে সাময়িকভাবে ক্যাশ টাইম ৫ সেকেন্ড করা হলো
 def load_data():
+    # Error tracking enabled to see actual database failures
     try:
         r = supabase.table("tpl_inv_products").select(",".join(COLS_P)).order("product_name").execute()
         dp = pd.DataFrame(r.data) if r.data else pd.DataFrame(columns=COLS_P)
-    except Exception:
+    except Exception as e:
+        st.error(f"Supabase Product Error: {str(e)}")
         dp = pd.DataFrame(columns=COLS_P)
+        
     try:
         r = supabase.table("tpl_inv_transactions").select(",".join(COLS_T)).execute()
         dt = pd.DataFrame(r.data) if r.data else pd.DataFrame(columns=COLS_T)
-    except Exception:
+    except Exception as e:
+        st.error(f"Supabase Transaction Error: {str(e)}")
         dt = pd.DataFrame(columns=COLS_T)
     return dp, dt
 
@@ -213,7 +213,6 @@ st.sidebar.markdown(
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-# Spacer & Optional Sidebar Logout
 st.sidebar.markdown('<div style="min-height:35vh"></div><hr style="border-color:#1E293B;margin:0">', unsafe_allow_html=True)
 st.sidebar.markdown('<div style="padding:14px 14px 16px">', unsafe_allow_html=True)
 if st.sidebar.button("Logout Session", key="sb_logout", use_container_width=True):
