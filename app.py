@@ -12,17 +12,57 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# SESSION PERSISTENCE VIA QUERY PARAMS
+# PERSISTENT AUTH — COOKIES + QUERY PARAMS
 # ==========================================
-if "logged_in" not in st.session_state:
+AUTH_COOKIE = "kccl_auth"
+
+_persistent = False
+# Method 1: Cookies (most reliable across refresh)
+try:
+    if hasattr(st, "context") and hasattr(st.context, "cookies"):
+        _cv = st.context.cookies.get(AUTH_COOKIE, "")
+        if str(_cv) == "1":
+            _persistent = True
+except Exception:
+    pass
+# Method 2: Query params fallback
+if not _persistent:
     try:
-        _auth = st.query_params.get("auth", None)
-        if _auth == "1" or _auth == ["1"]:
-            st.session_state["logged_in"] = True
-        else:
-            st.session_state["logged_in"] = False
+        _qp = st.query_params.to_dict() if hasattr(st.query_params, "to_dict") else {}
+        _av = _qp.get("auth", "")
+        if isinstance(_av, list):
+            _av = _av[0] if _av else ""
+        if str(_av) == "1":
+            _persistent = True
     except Exception:
-        st.session_state["logged_in"] = False
+        pass
+
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = _persistent
+
+def _set_auth(val):
+    st.session_state["logged_in"] = val
+    try:
+        if hasattr(st, "context") and hasattr(st.context, "cookies"):
+            if val:
+                st.context.cookies.set(AUTH_COOKIE, "1")
+            else:
+                st.context.cookies.delete(AUTH_COOKIE)
+    except Exception:
+        pass
+    try:
+        if val:
+            st.query_params["auth"] = "1"
+        else:
+            try:
+                del st.query_params["auth"]
+            except Exception:
+                try:
+                    st.query_params.pop("auth", None)
+                except Exception:
+                    pass
+    except Exception:
+        pass
 
 # ==========================================
 # PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
@@ -97,11 +137,7 @@ if not st.session_state["logged_in"]:
             p = st.text_input("Password", type="password", placeholder="Enter password")
             if st.form_submit_button("Sign In", use_container_width=True):
                 if u == "admin" and p == "kccl@2026":
-                    st.session_state["logged_in"] = True
-                    try:
-                        st.query_params["auth"] = "1"
-                    except Exception:
-                        pass
+                    _set_auth(True)
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
@@ -119,7 +155,6 @@ st.markdown("""<style>
 header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
 #MainMenu, footer{visibility:hidden!important}
 
-/* SIDEBAR SYSTEM */
 section[data-testid="stSidebar"] {
     background:#0B0F19!important;
     border-right:1px solid #1E293B!important;
@@ -181,7 +216,6 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
     box-shadow: 0 4px 12px rgba(220,38,38,0.2) !important;
 }
 
-/* UI DASHBOARD CARDS & WIDGETS */
 .stat-box {
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:14px!important;
     padding:20px 22px!important;min-height:100px!important;
@@ -229,19 +263,12 @@ page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visib
 with st.sidebar:
     st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
     if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
-        st.session_state["logged_in"] = False
-        try:
-            del st.query_params["auth"]
-        except Exception:
-            try:
-                st.query_params.pop("auth", None)
-            except Exception:
-                pass
+        _set_auth(False)
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# CONFIG & INITIAL DATA LOAD
+# CONFIG & DATA LOAD
 # ==========================================
 UNITS = ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX", "KG", "GM", "SET", "PAIR", "ROLL", "CAN", "BOTTLE", "PACK", "SHEET", "BUNDLE", "TUBE", "GAL", "NOS", "KIT"]
 COLS_P = ["id", "product_name", "item_code", "default_unit", "total_added_to_system"]
@@ -436,9 +463,9 @@ elif page == "Transaction":
         sel_prod = st.selectbox("Product *", df_p["product_name"].tolist(), key="tp")
         item_code = st.text_input("Item Code *", placeholder="Comma-separated for bulk: IC-001, IC-002", key="tc")
         serial = st.text_area("Serial Number(s) *", placeholder="Comma-separated: SN-001, SN-002, SN-003", height=60, key="ts")
-        st.markdown('<div class="hint">UPLOAD: comma-separated serials = separate rows created.<br>ISSUE/RETURN: must match uploaded serials exactly.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hint">UPLOAD: comma-separated serials = each gets its own row.<br>Quantity is auto-divided equally among serials.</div>', unsafe_allow_html=True)
         unit = st.selectbox("Unit *", UNITS, key="tu")
-        qty = st.number_input("Quantity *", min_value=0.001, step=0.001, format="%.3f", key="tq")
+        qty = st.number_input("Total Quantity *", min_value=0.001, step=0.001, format="%.3f", key="tq")
 
     with cr:
         st.markdown('<div class="form-sec">Workflow Action</div>', unsafe_allow_html=True)
@@ -471,15 +498,22 @@ elif page == "Transaction":
                 st.error("No valid Item Code provided.")
                 st.stop()
 
-            # FIX: iterate over max of codes & serials so every serial gets its own row
-            max_entries = max(len(codes), len(serials))
+            num_entries = max(len(codes), len(serials))
+            # FIX: divide total quantity equally among all serial entries
+            per_qty = round(qty / num_entries, 3)
+            # last entry absorbs rounding diff so total always matches
+            distributed = per_qty * (num_entries - 1)
+            last_qty = round(qty - distributed, 3)
+
             ok = 0
-            for i in range(max_entries):
+            for i in range(num_entries):
                 code = codes[i] if i < len(codes) else (codes[-1] if codes else "")
                 sn = serials[i] if i < len(serials) else ""
+                entry_qty = last_qty if i == num_entries - 1 else per_qty
+
                 payload = {
                     "product_id": pid, "item_code": code, "serial_number": sn,
-                    "quantity": qty, "unit": unit, "issued_to": "",
+                    "quantity": entry_qty, "unit": unit, "issued_to": "",
                     "invoice_no": invoice.strip(), "action_type": "UPLOAD",
                     "created_at": datetime.now().isoformat()
                 }
@@ -489,7 +523,7 @@ elif page == "Transaction":
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
             if ok > 0:
-                st.success("Uploaded " + str(ok) + " item(s) successfully — each serial got its own row!")
+                st.success("Uploaded " + str(ok) + " item(s) — " + "{:.3f}".format(per_qty) + " " + unit + " each (total " + "{:.3f}".format(qty) + ")")
                 load_data.clear()
                 st.rerun()
         else:
