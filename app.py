@@ -8,7 +8,7 @@ from datetime import datetime
 # SUPABASE
 # ==========================================
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi6ImVtZGpubmRuc2RlYmhiemVicnNnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
+SUPABASE_KEY = os.environ.get("SUPABSE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide", initial_sidebar_state="expanded")
@@ -16,36 +16,33 @@ st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide",
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-# Hide Sidebar and Header strictly when NOT logged in
 if not st.session_state["logged_in"]:
-    st.markdown("<style>section[data-testid='stSidebar']{display:none!important}header[data-testid='stHeader']{display:none!important}</style>", unsafe_allow_html=True)
+    st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# THEME & CUSTOM CSS
+# THEME
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 .stApp{background:#F1F5F9!important;color:#0A0F1D!important;font-family:'Inter',system-ui,sans-serif!important}
 .block-container{padding:.8rem 2rem!important;max-width:1560px;margin:0 auto;position:relative;z-index:1}
-
-header[data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
-section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important}
+header[data-testid="stHeader"]{height:0!important;min-height:0!important;padding:0!important;overflow:hidden!important;border:none!important;box-shadow:none!important;visibility:hidden!important}
+section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:2px solid #1E293B!important;width:250px!important;min-width:250px!important;overflow:hidden!important;overflow-y:hidden!important}
+section[data-testid="stSidebar"]>div:first-child{width:250px!important;overflow:hidden!important}
 #MainMenu,footer{visibility:hidden}
-.sb-logo{text-align:left!important;align-items:flex-start!important;padding:18px 14px 14px!important}
-.sb-logo img{border-radius:8px;max-width:130px;height:48px}
+.sb-logo{padding:20px 8px 14px;text-align:center!important;border-bottom:1px solid #1E293B;display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important}
+.sb-logo img{border-radius:8px;max-width:130px!important;height:auto}
 .sb-logo-name{font-size:18px;font-weight:800;color:#FFFFFF!important;letter-spacing:-.4px}
 .sb-logo-sub{font-size:10px;color:#38BDF8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
-.sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.33)}
+.sb-fallback-icon{width:48px;height:48px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .sb-nav-label{font-size:10px;color:#94A3B8!important;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;padding:14px 20px 8px;text-align:center!important}
-
 section[data-testid="stRadio"]>label{margin-bottom:2px!important;display:block!important}
-section[data-testid="stRadio"]>div{white-space:normal!important;overflow:visible!important;text-overflow:visible!important;height:auto!important;min-height:44px!important;justify-content:center!important}
-section[data-testid="stVerticalBlock"]>label>div{white-space:normal!important;overflow:visible!important;text-overflow:visible!important;height:auto!important;min-height:44px!important;justify-content:center!important}
-
+section[data-testid="stRadio"]>div{display:flex!important;justify-content:center!important;padding:10px 20px!important;font-size:14px!important;font-weight:600!important;color:#CBD5E1!important;border-left:4px solid transparent!important;transition:all .15s!important}
+section[data-testid="stRadio"]>div:hover{background:#1E293B!important;color:#FFFFFF!important}
+section[data-testid="stRadio"][data-testid="stVerticalBlock"]>div[aria-checked="true"]{background:#111827!important;color:#FFFFFF!important;border-left:4px solid #FFFFFF!important;font-weight:700!important}
 .stat-box{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:10px;padding:16px 18px;min-height:90px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .stat-lbl{font-size:10px;color:#475569!important;text-transform:uppercase;letter-spacing:1px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat-val{font-size:26px;font-weight:800;color:#0A0F1D!important;margin-top:4px;line-height:1}
-
 .p-card{background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;justify-content:space-between;height:72px;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:all .15s}
 .p-card:hover{border-color:#2563EB;background:#F8FAFF;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.1)}
 .p-top{display:flex;align-items:center;gap:5px;overflow:hidden}
@@ -56,32 +53,37 @@ section[data-testid="stVerticalBlock"]>label>div{white-space:normal!important;ov
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot-g{background:#16A34A}.dot-y{background:#D97706}.dot-r{background:#DC2626}
 .sec-h{font-size:14px;font-weight:800;color:#0A0F1D!important;margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid #0A0F1D}
-
 .stDownloadButton>button{background:#0EA5E9!important;color:#FFFFFF!important;border:none!important;border-radius:8px!important;font-weight:700!important;font-size:13px!important;padding:10px 16px!important;width:100%;box-shadow:0 2px 8px rgba(14,165,233,.25)!important;transition:all .15s!important}
 .stDownloadButton>button:hover{background:#0284C7!important;box-shadow:0 4px 14px rgba(14,165,233,.35)!important}
 .stButton>button[kind="primary"]{background:#0A0F1D!important;color:#FFFFFF!important;border:none!important;border-radius:8px!important;font-weight:700!important;font-size:14px!important;padding:11px 24px!important;width:100%;transition:all .15s!important}
 .stButton>button[kind="primary"]:hover{background:#1E293B!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important}
-
 label p,.stDateInput>label{font-size:12px!important;font-weight:700!important;color:#0A0F1D!important}
 .stTextInput>div>div>input,.stSelectbox>div>div>select,.stNumberInput>div>div>input,.stTextArea>div>div>textarea{background:#FFFFFF!important;border:2px solid #94A3B8!important;border-radius:6px!important;color:#0A0F1D!important;font-weight:600!important;transition:all .15s}
 .stTextInput>div>div>input:focus,.stSelectbox>div>div>select:focus,.stNumberInput>div>div>input:focus{border-color:#2563EB!important;box-shadow:0 0 0 3px rgba(37,99,235,.1)!important}
 .stTextInput>div>div>input:disabled,.stNumberInput>div>div>input:disabled{background:#F1F5F9!important;color:#64748B!important;border-color:#CBD5E1!important}
 .stTextArea>div>div>textarea{font-family:Courier New,monospace!important;font-size:12px!important}
 input[type="date"]{background:#FFFFFF!important;color:#0A0F1D!important;border:2px solid #94A3B8!important;border-radius:6px!important}
-
+[data-baseweb="select"]>div>ul{max-height:260px!important;overflow-y:auto!important;border-radius:6px!important;border:2px solid #94A3B8!important;box-shadow:0 10px 30px rgba(0,0,0,.12)!important;background:#FFFFFF!important}
+[data-baseweb="select"]>div>ul>li{font-size:13px!important;color:#0A0F1D!important;padding:8px 12px!important}
+[data-baseweb="select"]>div>ul>li:hover{background:#F1F5F9!important}
+[data-baseweb="select"]>div>ul>li[aria-selected="true"]{background:#EFF6FF!important;color:#2563EB!important}
+[data-baseweb="tag"]{background:#DBEAFE!important;border-radius:4px!important;color:#2563EB!important}
+.form-sec{font-size:11px;font-weight:700;color:#2563EB!important;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.hint{font-size:11px;color:#64748B!important;margin-top:-2px;margin-bottom:8px;font-weight:500}
 .dataframe{border:1px solid #CBD5E1!important;border-radius:8px!important;overflow:hidden;background:#FFFFFF!important}
 .dataframe th{background:#F8FAFC!important;color:#475569!important;font-size:10px!important;text-transform:uppercase;letter-spacing:.5px;font-weight:700!important;border-bottom:2px solid #0A0F1D!important;padding:10px 14px!important}
 .dataframe td{color:#0A0F1D!important;font-size:12.5px!important;border-bottom:1px solid #F1F5F9!important;padding:9px 14px!important}
-
-.login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08);margin-top: 30px;}
+.dataframe tr:last-child td{border-bottom:none!important}
+.dataframe tr:hover td{background:#F8FAFF!important}
+.stInfo{background:#EFF6FF!important;border:1px solid #BFDBFE!important;color:#1E40AF!important;border-radius:8px!important}
+.stWarning{background:#FFFBEB!important;border:1px solid #FDE68A!important;color:#92400E!important;border-radius:8px!important}
+.stSuccess{background:#ECFDF5!important;border:1px solid #A7F3D0!important;color:#065F46!important;border-radius:8px!important}
+.stError{background:#FEF2F2!important;border:1px solid #FECACA!important;color:#991B1B!important;border-radius:8px!important}
+.login-card{background:#FFFFFF;border:2px solid #0A0F1D;border-radius:14px;padding:40px 36px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
 .login-icon{width:64px;height:64px;margin:0 auto 16px;background:linear-gradient(135deg,#0A0F1D,#1E293B);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#FFFFFF;box-shadow:0 8px 24px rgba(0,0,0,.2)}
-.login-logo-wrap{display:flex;justify-content:center!important;margin-bottom:20px;align-items:center;width:100%}
-.login-logo-wrap img{border-radius:8px;max-width:140px;height:48px}
+.login-logo-wrap{display:flex;justify-content:center;margin-bottom:20px;flex-direction:column;align-items:center;gap:6px}
+.login-logo-wrap img{border-radius:8px;max-width:140px}
 .login-header{text-align:center;margin-bottom:28px}
-
-.top-logout{position:fixed;top:16px;right:20px;z-index:200}
-.top-logout button{background:#0A0F1D!important;border:1px solid #1E293B!important;color:#CBD5E1!important;border-radius:6px;padding:6px 16px!important;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s!important}
-.top-logout button:hover{border-color:#EF4444!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(239,68,68,.15)!important}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -91,21 +93,17 @@ UNITS = ["PCS","LTR","ML","MTR","DRUM","BOX","KG","GM","SET","PAIR","ROLL","CAN"
 COLS_P = ["id","product_name","item_code","default_unit","total_added_to_system"]
 COLS_T = ["id","product_id","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type","created_at"]
 
-@st.cache_data(ttl=5) # Debugging এর সুবিধার্থে সাময়িকভাবে ক্যাশ টাইম ৫ সেকেন্ড করা হলো
+@st.cache_data(ttl=60)
 def load_data():
-    # Error tracking enabled to see actual database failures
     try:
         r = supabase.table("tpl_inv_products").select(",".join(COLS_P)).order("product_name").execute()
         dp = pd.DataFrame(r.data) if r.data else pd.DataFrame(columns=COLS_P)
-    except Exception as e:
-        st.error(f"Supabase Product Error: {str(e)}")
+    except Exception:
         dp = pd.DataFrame(columns=COLS_P)
-        
     try:
         r = supabase.table("tpl_inv_transactions").select(",".join(COLS_T)).execute()
         dt = pd.DataFrame(r.data) if r.data else pd.DataFrame(columns=COLS_T)
-    except Exception as e:
-        st.error(f"Supabase Transaction Error: {str(e)}")
+    except Exception:
         dt = pd.DataFrame(columns=COLS_T)
     return dp, dt
 
@@ -161,10 +159,10 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# LOGIN PORTAL
+# LOGIN
 # ==========================================
 if not st.session_state["logged_in"]:
-    _, mid, _ = st.columns([1.2, 1.4, 1.2])
+    _, mid, _ = st.columns([1.3, 1.4, 1.3])
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
         st.markdown('<div class="login-logo-wrap">', unsafe_allow_html=True)
@@ -193,17 +191,16 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# SIDEBAR NAVIGATION
+# SIDEBAR — Logo + Nav only, no clock/logout/spacer/hr
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
     try:
         st.sidebar.image("assets/logo.png", width=110)
     except Exception:
-        st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
+        pass
 else:
     st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
-
 st.sidebar.markdown(
     '<div class="sb-logo-name">AssetFlow</div>'
     '<div class="sb-logo-sub">KCCL Operations</div></div>',
@@ -213,26 +210,20 @@ st.sidebar.markdown(
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
-st.sidebar.markdown('<div style="min-height:35vh"></div><hr style="border-color:#1E293B;margin:0">', unsafe_allow_html=True)
-st.sidebar.markdown('<div style="padding:14px 14px 16px">', unsafe_allow_html=True)
-if st.sidebar.button("Logout Session", key="sb_logout", use_container_width=True):
-    st.session_state["logged_in"] = False
-    st.rerun()
-st.sidebar.markdown('</div>', unsafe_allow_html=True)
-
 # ==========================================
-# DATA RESOLUTION
+# LOAD DATA
 # ==========================================
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
+# Product name map for exports
 p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
 # ==========================================
-# DASHBOARD PAGE
+# DASHBOARD
 # ==========================================
 if page == "Dashboard":
     if df_p.empty:
@@ -250,18 +241,34 @@ if page == "Dashboard":
         dft["created_at"] = pd.to_datetime(dft["created_at"], errors="coerce")
         m = dft.dropna(subset=["created_at"])
         mk = (m["created_at"].dt.month == NOW.month) & (m["created_at"].dt.year == NOW.year)
-        im = safe_num(m[mk & (m["action_type"] == "ISSUE")]["quantity"].sum())
-        rm = safe_num(m[mk & (m["action_type"] == "RETURN")]["quantity"].sum())
+        im = safe_num(m[mk & (m["action_type"].eq("ISSUE"))]["quantity"].sum())
+        rm = safe_num(m[mk & (m["action_type"].eq("RETURN"))]["quantity"].sum())
 
     s1, s2, s3, s4 = st.columns(4)
     with s1:
-        st.markdown(f'<div class="stat-box"><div class="stat-lbl">Active Items</div><div class="stat-val">{len(df_p)}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-box"><div class="stat-lbl">Active Items</div>'
+            '<div class="stat-val">' + str(len(df_p)) + '</div></div>',
+            unsafe_allow_html=True
+        )
     with s2:
-        st.markdown(f'<div class="stat-box"><div class="stat-lbl">Total Stock</div><div class="stat-val">{ts:,.1f}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-box"><div class="stat-lbl">Total Stock</div>'
+            '<div class="stat-val">' + "{:,.1f}".format(ts) + '</div></div>',
+            unsafe_allow_html=True
+        )
     with s3:
-        st.markdown(f'<div class="stat-box"><div class="stat-lbl">Issued (Month)</div><div class="stat-val">{im:,.1f}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-box"><div class="stat-lbl">Issued (Month)</div>'
+            '<div class="stat-val">' + "{:,.1f}".format(im) + '</div></div>',
+            unsafe_allow_html=True
+        )
     with s4:
-        st.markdown(f'<div class="stat-box"><div class="stat-lbl">Returned (Month)</div><div class="stat-val">{rm:,.1f}</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-box"><div class="stat-lbl">Returned (Month)</div>'
+            '<div class="stat-val">' + "{:,.1f}".format(rm) + '</div></div>',
+            unsafe_allow_html=True
+        )
 
     st.markdown('<div class="sec-h">Live Inventory Distribution</div>', unsafe_allow_html=True)
     cards = st.columns(5)
@@ -272,36 +279,29 @@ if page == "Dashboard":
         pid = row["id"]
         nm = row["product_name"]
         unit = row["default_unit"]
-
-        total_uploads = 0.0
-        if not df_t.empty:
-            total_uploads = pd.to_numeric(
-                df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))]["quantity"], 
-                errors="coerce"
-            ).fillna(0).sum()
-
+        total = safe_num(row.get("total_added_to_system", 0), 0)
         stk = get_stock(df_t, pid)
-        dc = dot_cls(stk, total_uploads)
-        stk_str = f"{stk:.0f}"
-        total_int = str(int(total_uploads))
+        dc = dot_cls(stk, total)
+        stk_str = "{:.0f}".format(stk)
+        total_int = str(int(total))
 
         sum_rows.append({
             "Product Name": nm,
             "In Stock": round(stk, 3),
             "Unit": unit,
-            "Total Added": int(total_uploads)
+            "Total Added": int(total)
         })
 
         card_html = (
-            f'<div class="p-card">'
-            f'<div class="p-top">'
-            f'<span class="dot {dc}"></span>'
-            f'<div class="p-name">{nm}</div>'
-            f'</div>'
-            f'<div class="p-bottom">'
-            f'<div class="p-total">Total: {total_int} {unit}</div>'
-            f'<div class="p-stock">{stk_str}</div>'
-            f'</div></div>'
+            '<div class="p-card">'
+            '<div class="p-top">'
+            '<span class="dot ' + dc + '"></span>'
+            '<div class="p-name">' + nm + '</div>'
+            '</div>'
+            '<div class="p-bottom">'
+            '<div class="p-total">Total: ' + total_int + ' ' + unit + '</div>'
+            '<div class="p-stock">' + stk_str + '</div>'
+            '</div></div>'
         )
 
         with cards[idx % 5]:
@@ -320,11 +320,12 @@ if page == "Dashboard":
             df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
-            ec = [c for c in df_d.columns]
+            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+            ec = [c for c in ec if c in df_d.columns]
             st.download_button(
                 "Download Full Dump CSV",
                 data=to_csv(df_d[ec]),
-                file_name=f"AssetFlow_FullDump_{DT_STR}.csv",
+                file_name="AssetFlow_FullDump_" + DT_STR + ".csv",
                 mime="text/csv",
                 key="d1"
             )
@@ -335,7 +336,7 @@ if page == "Dashboard":
             st.download_button(
                 "Download Summary CSV",
                 data=to_csv(df_sum),
-                file_name=f"AssetFlow_Summary_{DT_STR}.csv",
+                file_name="AssetFlow_Summary_" + DT_STR + ".csv",
                 mime="text/csv",
                 key="d2"
             )
@@ -350,20 +351,24 @@ if page == "Dashboard":
                 df_is["created_at"] = df_is["created_at"].apply(ind_dt)
                 df_is["Product"] = sel
                 df_is = explode_serials(df_is)
-                ec = [c for c in df_is.columns]
+                ec = ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no"]
+                ec = [c for c in ec if c in df_is.columns]
                 safe_name = sel.lower().replace(" ", "_")
                 st.download_button(
-                    f"Download {sel} Logs",
+                    "Download " + sel + " Logs",
                     data=to_csv(df_is[ec]),
-                    file_name=f"AssetFlow_{safe_name}_Issued_{DT_STR}.csv",
+                    file_name="AssetFlow_" + safe_name + "_Issued_" + DT_STR + ".csv",
                     mime="text/csv",
                     key="d3"
                 )
             else:
-                st.markdown('<p style="font-size:11px;color:#DC2626;margin-top:4px;font-weight:600">No issue records.</p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p style="font-size:11px;color:#DC2626;margin-top:4px;font-weight:600">No issue records.</p>',
+                    unsafe_allow_html=True
+                )
 
 # ==========================================
-# TRANSACTION PAGE
+# TRANSACTION
 # ==========================================
 elif page == "Transaction":
     if df_p.empty:
@@ -377,7 +382,10 @@ elif page == "Transaction":
         sel_prod = st.selectbox("Product *", df_p["product_name"].tolist(), key="tp")
         item_code = st.text_input("Item Code *", placeholder="Comma-separated for bulk: IC-001, IC-002", key="tc")
         serial = st.text_area("Serial Number(s) *", placeholder="Comma-separated: SN-001, SN-002", height=60, key="ts")
-        st.markdown('<div class="hint">UPLOAD: comma = separate entries. ISSUE/RETURN: must match uploads.</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="hint">UPLOAD: comma = separate entries. ISSUE/RETURN: must match uploads.</div>',
+            unsafe_allow_html=True
+        )
         unit = st.selectbox("Unit *", UNITS, key="tu")
         qty = st.number_input("Quantity *", min_value=0.001, step=0.001, format="%.3f", key="tq")
 
@@ -435,9 +443,9 @@ elif page == "Transaction":
                     if res.data:
                         ok += 1
                 except Exception as ex:
-                    st.error(f"Failed for {code}: {str(ex)}")
+                    st.error("Failed for " + code + ": " + str(ex))
             if ok > 0:
-                st.success(f"Uploaded {ok} item(s) successfully!")
+                st.success("Uploaded " + str(ok) + " item(s) successfully!")
                 load_data.clear()
                 st.rerun()
         else:
@@ -446,17 +454,17 @@ elif page == "Transaction":
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
                 if ic not in uploads["item_code"].values:
-                    st.error(f"Item Code '{ic}' not found in uploads!")
+                    st.error("Item Code '" + ic + "' not found in uploads!")
                     st.stop()
                 if sn:
                     match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
                     if match.empty:
-                        st.error(f"Serial '{sn}' not found for '{ic}'!")
+                        st.error("Serial '" + sn + "' not found for '" + ic + "'!")
                         st.stop()
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
                 if qty > cs:
-                    st.error(f"Insufficient stock! Available: {cs:.3f} {unit}")
+                    st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
                     st.stop()
             payload = {
                 "product_id": pid,
@@ -472,16 +480,16 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.success(f"Committed: {action} {qty:.3f} {unit} - {ic}")
+                    st.success("Committed: " + action + " " + "{:.3f}".format(qty) + " " + unit + " - " + ic)
                     load_data.clear()
                     st.rerun()
                 else:
                     st.error("Insert failed. Check RLS.")
             except Exception as ex:
-                st.error(f"DB Error: {str(ex)}")
+                st.error("DB Error: " + str(ex))
 
 # ==========================================
-# REPORTS PAGE
+# REPORTS — No form-wrap box
 # ==========================================
 elif page == "Reports":
     if df_t.empty:
@@ -497,7 +505,10 @@ elif page == "Reports":
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
     mx = df_r["_d"].max() if df_r["_d"].notna().any() else NOW.date()
 
-    st.markdown('<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>',
+        unsafe_allow_html=True
+    )
     f1, f2, f3, f4, f5 = st.columns(5)
     with f1:
         df_ = st.date_input("From", value=mn, key="rf")
@@ -509,6 +520,7 @@ elif page == "Reports":
         im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
     with f5:
         st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
+
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
     active = df_ != mn or dt_ != mx or it_ or im_ or st_ or iv_
@@ -532,17 +544,22 @@ elif page == "Reports":
 
     r1, r2 = st.columns([2, 1])
     with r1:
-        st.markdown(f'<p style="font-size:13px;color:#0A0F1D;margin-top:10px;font-weight:700">Showing <span style="color:#2563EB">{len(df_f)}</span> records</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="font-size:13px;color:#0A0F1D;margin-top:10px;font-weight:700">'
+            'Showing <span style="color:#2563EB">' + str(len(df_f)) + '</span> records</p>',
+            unsafe_allow_html=True
+        )
     with r2:
         if not df_f.empty:
             df_ex = df_f.copy()
             df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             df_ex = explode_serials(df_ex)
-            ec = [c for c in df_ex.columns]
+            ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+            ec = [c for c in ec if c in df_ex.columns]
             st.download_button(
                 "Export CSV",
                 data=to_csv(df_ex[ec]),
-                file_name=f"AssetFlow_Report_{DT_STR}.csv",
+                file_name="AssetFlow_Report_" + DT_STR + ".csv",
                 mime="text/csv",
                 key="dr"
             )
@@ -551,22 +568,19 @@ elif page == "Reports":
         df_s = df_f.copy()
         df_s["created_at"] = df_s["created_at"].apply(ind_dt)
         df_s = explode_serials(df_s)
-        ec = [c for c in df_s.columns]
+        ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
+        ec = [c for c in ec if c in df_s.columns]
         df_s = df_s[ec].rename(columns={
-            "created_at": "Date", "product_name": "Product", "item_code": "Code",
-            "serial_number": "Serial", "quantity": "Qty", "unit": "Unit",
-            "issued_to": "Issued To", "invoice_no": "Invoice", "action_type": "Action"
+            "created_at": "Date",
+            "product_name": "Product",
+            "item_code": "Code",
+            "serial_number": "Serial",
+            "quantity": "Qty",
+            "unit": "Unit",
+            "issued_to": "Issued To",
+            "invoice_no": "Invoice",
+            "action_type": "Action"
         })
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
-
-# ==========================================
-# FLOATING TOP LOGOUT BUTTON
-# ==========================================
-if st.session_state["logged_in"]:
-    st.markdown('<div class="top-logout">', unsafe_allow_html=True)
-    if st.button("Logout Session", key="top_logout_btn"):
-        st.session_state["logged_in"] = False
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
