@@ -12,13 +12,22 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PAGE CONFIG & SESSION PERSISTENCE
+# SESSION PERSISTENCE VIA QUERY PARAMS
+# ==========================================
+if "logged_in" not in st.session_state:
+    try:
+        _auth = st.query_params.get("auth", None)
+        if _auth == "1" or _auth == ["1"]:
+            st.session_state["logged_in"] = True
+        else:
+            st.session_state["logged_in"] = False
+    except Exception:
+        st.session_state["logged_in"] = False
+
+# ==========================================
+# PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
 # ==========================================
 st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide", initial_sidebar_state="expanded")
-
-# Initialize login state seamlessly
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
 
 # ==========================================
 # LOGIN PAGE
@@ -89,6 +98,10 @@ if not st.session_state["logged_in"]:
             if st.form_submit_button("Sign In", use_container_width=True):
                 if u == "admin" and p == "kccl@2026":
                     st.session_state["logged_in"] = True
+                    try:
+                        st.query_params["auth"] = "1"
+                    except Exception:
+                        pass
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
@@ -182,6 +195,7 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;
     padding:16px 18px!important;display:flex!important;flex-direction:column!important;
     justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease!important;
 }
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
@@ -216,6 +230,13 @@ with st.sidebar:
     st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
     if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
         st.session_state["logged_in"] = False
+        try:
+            del st.query_params["auth"]
+        except Exception:
+            try:
+                st.query_params.pop("auth", None)
+            except Exception:
+                pass
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -341,11 +362,11 @@ if page == "Dashboard":
         pid = row["id"]
         nm = row["product_name"]
         unit = row["default_unit"]
-        
+
         total_uploads = 0.0
         if not df_t.empty:
             total_uploads = pd.to_numeric(
-                df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))]["quantity"], 
+                df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))]["quantity"],
                 errors="coerce"
             ).fillna(0).sum()
 
@@ -414,8 +435,8 @@ elif page == "Transaction":
         st.markdown('<div class="form-sec">Asset Parameters</div>', unsafe_allow_html=True)
         sel_prod = st.selectbox("Product *", df_p["product_name"].tolist(), key="tp")
         item_code = st.text_input("Item Code *", placeholder="Comma-separated for bulk: IC-001, IC-002", key="tc")
-        serial = st.text_area("Serial Number(s) *", placeholder="Comma-separated: SN-001, SN-002", height=60, key="ts")
-        st.markdown('<div class="hint">UPLOAD: comma = separate entries. ISSUE/RETURN: must match uploads.</div>', unsafe_allow_html=True)
+        serial = st.text_area("Serial Number(s) *", placeholder="Comma-separated: SN-001, SN-002, SN-003", height=60, key="ts")
+        st.markdown('<div class="hint">UPLOAD: comma-separated serials = separate rows created.<br>ISSUE/RETURN: must match uploaded serials exactly.</div>', unsafe_allow_html=True)
         unit = st.selectbox("Unit *", UNITS, key="tu")
         qty = st.number_input("Quantity *", min_value=0.001, step=0.001, format="%.3f", key="tq")
 
@@ -442,15 +463,19 @@ elif page == "Transaction":
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
-        # FIXED: Comma parsing handles exact splits for multiple unique records
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
             serials = [s.strip() for s in serial.split(",") if s.strip()]
+
             if not codes:
-                st.error("No valid Item Code.")
+                st.error("No valid Item Code provided.")
                 st.stop()
+
+            # FIX: iterate over max of codes & serials so every serial gets its own row
+            max_entries = max(len(codes), len(serials))
             ok = 0
-            for i, code in enumerate(codes):
+            for i in range(max_entries):
+                code = codes[i] if i < len(codes) else (codes[-1] if codes else "")
                 sn = serials[i] if i < len(serials) else ""
                 payload = {
                     "product_id": pid, "item_code": code, "serial_number": sn,
@@ -464,52 +489,45 @@ elif page == "Transaction":
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
             if ok > 0:
-                st.success("Uploaded " + str(ok) + " item(s) successfully!")
+                st.success("Uploaded " + str(ok) + " item(s) successfully — each serial got its own row!")
                 load_data.clear()
                 st.rerun()
         else:
-            # FIXED: Splits bulk comma requests for multi-issue or multi-return routines smoothly
-            codes = [c.strip() for c in item_code.split(",") if c.strip()]
-            serials = [s.strip() for s in serial.split(",") if s.strip()]
-            
+            ic = item_code.strip()
+            sn = serial.strip()
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
-                for i, ic in enumerate(codes):
-                    sn = serials[i] if i < len(serials) else ""
-                    if ic not in uploads["item_code"].values:
-                        st.error("Item Code '" + ic + "' not found in uploads!")
+                if ic not in uploads["item_code"].values:
+                    st.error("Item Code '" + ic + "' not found in uploads!")
+                    st.stop()
+                if sn:
+                    match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
+                    if match.empty:
+                        st.error("Serial '" + sn + "' not found for '" + ic + "'!")
                         st.stop()
-                    if sn:
-                        match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
-                        if match.empty:
-                            st.error("Serial '" + sn + "' not found for '" + ic + "'!")
-                            st.stop()
-            
+
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
-                if (qty * len(codes)) > cs:
-                    st.error("Insufficient stock! Total requested: " + "{:.3f}".format(qty * len(codes)) + " " + unit)
+                if qty > cs:
+                    st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
                     st.stop()
 
-            ok = 0
-            for i, code in enumerate(codes):
-                sn = serials[i] if i < len(serials) else ""
-                payload = {
-                    "product_id": pid, "item_code": code, "serial_number": sn,
-                    "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
-                    "invoice_no": invoice.strip(), "action_type": action,
-                    "created_at": datetime.now().isoformat()
-                }
-                try:
-                    res = supabase.table("tpl_inv_transactions").insert(payload).execute()
-                    if res.data: ok += 1
-                except Exception as ex:
-                    st.error("DB insertion failed for code " + code + ": " + str(ex))
-                    
-            if ok > 0:
-                st.success("Successfully processed " + action + " sequence for " + str(ok) + " item(s).")
-                load_data.clear()
-                st.rerun()
+            payload = {
+                "product_id": pid, "item_code": ic, "serial_number": sn,
+                "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
+                "invoice_no": invoice.strip(), "action_type": action,
+                "created_at": datetime.now().isoformat()
+            }
+            try:
+                res = supabase.table("tpl_inv_transactions").insert(payload).execute()
+                if res.data:
+                    st.success("Committed: " + action + " " + "{:.3f}".format(qty) + " " + unit + " - " + ic)
+                    load_data.clear()
+                    st.rerun()
+                else:
+                    st.error("Insert failed. Check RLS.")
+            except Exception as ex:
+                st.error("DB Error: " + str(ex))
 
 # --- Reports Page ---
 elif page == "Reports":
@@ -521,7 +539,7 @@ elif page == "Reports":
     if not df_p.empty:
         pmap = df_p.set_index("id")["product_name"].to_dict()
         df_r["product_name"] = df_r["product_id"].map(pmap).fillna("Unknown")
-    
+
     df_r["created_at"] = pd.to_datetime(df_r["created_at"], errors="coerce")
     df_r["_d"] = df_r["created_at"].dt.date
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
@@ -534,7 +552,7 @@ elif page == "Reports":
     with f3: it_ = st.multiselect("Issued To", sorted(df_r["issued_to"].dropna().unique()), key="ri")
     with f4: im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
     with f5: st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
-    
+
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
     df_f = df_r.copy()
