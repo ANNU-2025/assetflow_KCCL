@@ -20,24 +20,17 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
 # ==========================================
-# LOGIN PAGE — INJECTED FIRST, STOPPED BEFORE MAIN CSS
+# LOGIN PAGE
 # ==========================================
 if not st.session_state["logged_in"]:
-
-    # --- LOGIN-SPECIFIC CSS (vertical + horizontal center, white card, light bg) ---
     st.markdown("""<style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-    /* Hide sidebar & header on login */
     section[data-testid='stSidebar']{display:none!important}
     header[data-testid='stHeader']{display:none!important}
     footer{visibility:hidden!important}
     #MainMenu{visibility:hidden!important}
 
-    /* Light page background */
     .stApp{background:#F1F5F9!important}
-
-    /* CRITICAL: Force vertical centering of the entire block container */
     .block-container{
         display:flex!important;
         flex-direction:column!important;
@@ -47,262 +40,187 @@ if not st.session_state["logged_in"]:
         max-width:100%!important;
         padding:20px!important;
     }
-
-    /* The 3-column layout itself must also center vertically */
-    .block-container > div[data-testid="stVerticalBlock"]{
+    .block-container > div[data-testid="stVerticalBlock"] {
         width:100%!important;
-        max-width:480px!important;
-        display:flex!important;
-        flex-direction:column!important;
-        align-items:center!important;
-        justify-content:center!important;
+        max-width:440px!important;
     }
-
-    /* White card wrapper */
-    .login-card{
+    .login-card {
         background:#FFFFFF!important;
         border-radius:20px!important;
-        padding:44px 36px 36px!important;
+        padding:45px 40px!important;
         width:100%!important;
-        box-shadow:0 25px 60px rgba(0,0,0,0.07),0 1px 3px rgba(0,0,0,0.04)!important;
+        box-shadow:0 25px 60px rgba(0,0,0,0.06)!important;
         text-align:center!important;
     }
-
-    /* KCCL Bangla Title */
-    .login-kccl-title{
-        font-size:32px!important;font-weight:800!important;color:#0B0F19!important;
-        font-family:'Inter',sans-serif!important;margin:0 0 4px 0!important;
-        text-align:center!important;
-    }
-
-    .login-title{
-        font-size:20px!important;font-weight:700!important;color:#475569!important;
-        letter-spacing:-.5px!important;margin:0 0 4px 0!important;
+    .login-brand {
+        font-size:36px!important;
+        font-weight:800!important;
+        color:#0B0F19!important;
+        margin-bottom:35px!important;
         font-family:'Inter',sans-serif!important;
+        letter-spacing:-1px!important;
     }
-    .login-subtitle{
-        font-size:13px!important;color:#64748B!important;font-weight:500!important;
-        margin:0 0 28px 0!important;font-family:'Inter',sans-serif!important;
+    .login-card label p {
+        color:#334155!important;font-size:12px!important;font-weight:700!important;text-align:left!important;
     }
-
-    /* Form elements inside login */
-    .login-card [data-testid="stTextInput"] label p,
-    .login-card [data-testid="stForm"] label p{
-        color:#334155!important;font-size:12px!important;font-weight:700!important;
-        text-align:left!important;
+    .login-card input {
+        background:#F8FAFC!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;
     }
-    .login-card [data-testid="stTextInput"] > div > div > input{
-        background:#F8FAFC!important;border:2px solid #E2E8F0!important;
-        border-radius:10px!important;color:#0F172A!important;font-size:14px!important;
-    }
-    .login-card [data-testid="stTextInput"] > div > div > input:focus{
+    .login-card input:focus {
         border-color:#0EA5E9!important;
-        box-shadow:0 0 0 3px rgba(14,165,233,0.12)!important;
     }
-    .login-card [data-testid="stFormSubmitButton"] button{
-        background:#0B0F19!important;color:#FFFFFF!important;border:none!important;
-        border-radius:10px!important;font-weight:700!important;font-size:14px!important;
-        padding:12px!important;width:100%!important;margin-top:6px!important;
-        font-family:'Inter',sans-serif!important;
+    .login-card button {
+        background:#0B0F19!important;color:#FFFFFF!important;border:none!important;border-radius:10px!important;
+        font-weight:700!important;padding:12px!important;margin-top:10px!important;
     }
-    .login-card [data-testid="stFormSubmitButton"] button:hover{
-        background:#1E293B!important;box-shadow:0 4px 12px rgba(0,0,0,0.15)!important;
-    }
-    .login-card [data-testid="stException"]{
-        background:#FEF2F2!important;color:#DC2626!important;border:1px solid #FECACA!important;
-        border-radius:8px!important;padding:10px 14px!important;font-size:13px!important;
-        font-weight:600!important;text-align:left!important;
+    .login-card button:hover {
+        background:#1E293B!important;
     }
     </style>""", unsafe_allow_html=True)
 
-    # --- LOGIN UI using st.columns for horizontal center ---
-    _, mid, _ = st.columns([1, 1.2, 1])
+    _, mid, _ = st.columns([1, 1.3, 1])
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
-        st.markdown('<div class="login-kccl-title">KCCL Bangla</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-title">AssetFlow KCCL</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-subtitle">Inventory Control Portal</div>', unsafe_allow_html=True)
-
+        st.markdown('<div class="login-brand">KCCL Bangla</div>', unsafe_allow_html=True)
         with st.form("lf", clear_on_submit=False):
-            u = st.text_input("Username", placeholder="Enter username", label_visibility="visible")
-            p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="visible")
-            submitted = st.form_submit_button("Authenticate Sign In", use_container_width=True, type="primary")
-            if submitted:
+            u = st.text_input("Username", placeholder="Enter username")
+            p = st.text_input("Password", type="password", placeholder="Enter password")
+            if st.form_submit_button("Sign In", use_container_width=True):
                 if u == "admin" and p == "kccl@2026":
                     st.session_state["logged_in"] = True
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
-
         st.markdown('</div>', unsafe_allow_html=True)
-
-    st.stop()  # ← Prevents main CSS from loading on login page
+    st.stop()
 
 # ==========================================
-# MAIN APP CSS — DARK SIDEBAR + LIGHT MAIN
-# (Only reaches here if logged in because of st.stop() above)
+# MAIN APP CSS (DARK SIDEBAR + LIGHT MAIN)
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Main — Light background */
 .stApp{background:#F1F5F9!important;color:#0F172A!important;font-family:'Inter',system-ui,sans-serif!important}
 .block-container{padding:.8rem 2rem!important;max-width:1560px;margin:0 auto;position:relative;z-index:1}
 header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
-#MainMenu{visibility:hidden!important}
-footer{visibility:hidden!important}
+#MainMenu, footer{visibility:hidden!important}
 
 /* ==========================================
-   SIDEBAR — DARK THEME
+   SIDEBAR & RADIO SYSTEM — ALL WHITE TEXT
    ========================================== */
-section[data-testid="stSidebar"]{
+section[data-testid="stSidebar"] {
     background:#0B0F19!important;
     border-right:1px solid #1E293B!important;
 }
-/* Remove top/bottom padding from sidebar's main wrapper for cleaner look */
-section[data-testid="stSidebar"] > div{padding-top:8px!important}
-
-/* Sidebar KCCL Bangla Header */
-.sb-kccl-header{
-    font-size:20px!important;font-weight:800!important;color:#FFFFFF!important;
-    letter-spacing:-.5px!important;margin:12px 0 18px 0!important;line-height:1.2!important;
-    text-align:center!important;font-family:'Inter',sans-serif!important;
+section[data-testid="stSidebar"] > div:first-child {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
 }
 
-.sb-logo-name{
-    font-size:20px!important;font-weight:800!important;color:#FFFFFF!important;
-    letter-spacing:-.5px!important;margin:8px 0 0 0!important;line-height:1.2!important;
-    text-align:center!important;
+/* Sidebar Branding & Text Colors Forced White */
+.sb-header-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #FFFFFF !important;
+    text-align: center !important;
+    padding: 20px 10px 10px 10px !important;
+    letter-spacing: 0.5px !important;
 }
-.sb-logo-sub{
-    font-size:10px!important;color:#38BDF8!important;text-transform:uppercase!important;
-    letter-spacing:2px!important;font-weight:700!important;margin:2px 0 0 0!important;
-    text-align:center!important;
-}
-
-/* Sidebar Navigation Label */
-.sb-nav-label{
-    font-size:10px!important;color:#475569!important;text-transform:uppercase!important;
-    letter-spacing:1.5px!important;font-weight:700!important;
-    padding:18px 0 8px 0!important;text-align:center!important;
+.sb-nav-label {
+    font-size:11px!important;color:#94A3B8!important;text-transform:uppercase!important;
+    letter-spacing:1.5px!important;font-weight:700!important;padding:15px 0 5px 0!important;text-align:center!important;
 }
 
-/* ==========================================
-   SIDEBAR RADIO — DARK NAV WITH WHITE BORDER
-   ========================================== */
-section[data-testid="stSidebar"] section[data-testid="stRadio"]{background:transparent!important}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"]{gap:2px!important}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div{
+/* Radio button elements styling */
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div {
     padding:10px 20px!important;border-left:4px solid transparent!important;
-    border-radius:0!important;transition:none!important;margin:0!important;
+    transition:none!important;margin:0!important;
 }
-section[data-testid="stSidebar"] section[data-testid="stRadio"] label p{
-    color:#FFFFFF!important;font-size:13px!important;font-weight:600!important;
+section[data-testid="stSidebar"] section[data-testid="stRadio"] label p {
+    color:#FFFFFF!important;font-size:14px!important;font-weight:600!important;
 }
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover{
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover {
     background:transparent!important;
 }
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]{
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] {
     background:#111827!important;border-left:4px solid #FFFFFF!important;
 }
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p{
-    color:#FFFFFF!important;font-weight:700!important;
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p {
+    font-weight:700!important;
 }
 
-/* ==========================================
-   STAT BOXES — WHITE ON LIGHT
-   ========================================== */
-.stat-box{
+/* Pinned Logout Button Styling at bottom of sidebar */
+.sb-logout-box {
+    margin-top: auto !important;
+    padding: 20px !important;
+    border-top: 1px solid #1E293B !important;
+    background: #0B0F19 !important;
+}
+.sb-logout-box button {
+    background: transparent !important;
+    color: #FFFFFF !important;
+    border: 1px solid #DC2626 !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+.sb-logout-box button:hover {
+    background: #DC2626 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.2) !important;
+}
+
+/* UI Main Content boxes & Cards */
+.stat-box {
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:14px!important;
     padding:20px 22px!important;min-height:100px!important;
     display:flex!important;flex-direction:column!important;justify-content:center!important;
-    box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.02)!important;
-    color:#0F172A!important;transition:transform .15s,box-shadow .15s!important;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04)!important;color:#0F172A!important;
 }
-.stat-box:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(0,0,0,0.06)!important}
-.stat-lbl{font-size:11px!important;color:#64748B!important;text-transform:uppercase!important;letter-spacing:1px!important;font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.stat-lbl{font-size:11px!important;color:#64748B!important;text-transform:uppercase!important;letter-spacing:1px!important;font-weight:700!important}
 .stat-val{font-size:30px!important;font-weight:800!important;margin-top:6px!important;line-height:1!important;color:#0B0F19!important}
 
-/* ==========================================
-   PRODUCT CARDS — WHITE ON LIGHT
-   ========================================== */
 .p-card{
     background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;
     padding:14px 16px!important;display:flex!important;flex-direction:column!important;
-    justify-content:space-between!important;height:82px!important;
-    box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:all .18s!important;color:#0F172A!important;
+    justify-content:space-between!important;height:82px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;
 }
-.p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important;box-shadow:0 8px 20px rgba(14,165,233,0.1)!important}
-.p-top{display:flex;align-items:center;gap:6px;overflow:hidden}
-.p-bottom{display:flex;align-items:flex-end;justify-content:space-between}
+.p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-stock{font-size:22px;font-weight:800;color:#059669!important;line-height:1;text-align:right}
-.p-total{font-size:10px;color:#64748B!important;font-weight:600}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.dot-g{background:#059669;box-shadow:0 0 6px rgba(5,150,105,0.3)}
-.dot-y{background:#D97706;box-shadow:0 0 6px rgba(217,119,6,0.3)}
-.dot-r{background:#DC2626;box-shadow:0 0 6px rgba(220,38,38,0.3)}
+.p-stock{font-size:22px;font-weight:800;color:#059669!important;line-height:1}
+.p-total{font-size:11px;color:#64748B!important;font-weight:600}
 
-/* Section Headers */
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-g{background:#059669}.dot-y{background:#D97706}.dot-r{background:#DC2626}
 .sec-h{font-size:15px!important;font-weight:800!important;color:#0B0F19!important;margin:22px 0 12px!important;padding-bottom:8px!important;border-bottom:2px solid #0B0F19!important}
 
-/* Form labels — Dark */
 label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>label{font-size:12px!important;font-weight:700!important;color:#334155!important}
-.form-sec{font-size:11px!important;font-weight:800!important;color:#0B0F19!important;text-transform:uppercase!important;letter-spacing:1px!important;margin-bottom:12px!important;padding-bottom:6px!important;border-bottom:2px solid #0EA5E9!important;display:inline-block!important}
-.hint{font-size:11px!important;color:#94A3B8!important;margin-top:-2px!important;margin-bottom:10px!important}
+.form-sec{font-size:11px!important;font-weight:800!important;color:#0B0F19!important;text-transform:uppercase!important;margin-bottom:12px!important;padding-bottom:6px!important;border-bottom:2px solid #0EA5E9!important;display:inline-block!important}
+.hint{font-size:11px!important;color:#94A3B8!important;margin-top:-2px!important}
 
-/* Input fields — Light */
 .stTextInput>div>div>input,.stSelectbox>div>div>select,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stDateInput>div>div>input{
     background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;font-size:14px!important;
 }
-.stTextInput>div>div>input:focus,.stSelectbox>div>div>select:focus,.stTextArea>div>div>textarea:focus,.stNumberInput>div>div>input:focus{
-    border-color:#0EA5E9!important;box-shadow:0 0 0 3px rgba(14,165,233,0.1)!important;
-}
-
-/* Buttons */
-.stButton>button[kind="primary"]{
-    background:#0B0F19!important;color:#FFFFFF!important;border:none!important;border-radius:10px!important;
-    font-weight:700!important;font-size:14px!important;padding:12px 24px!important;transition:all .2s!important;
-}
-.stButton>button[kind="primary"]:hover{background:#1E293B!important;box-shadow:0 4px 12px rgba(0,0,0,0.15)!important}
-.stDownloadButton>button{
-    background:#0EA5E9!important;color:#FFFFFF!important;border:none!important;border-radius:10px!important;
-    font-weight:700!important;font-size:13px!important;padding:10px 18px!important;width:100%!important;
-    box-shadow:0 2px 8px rgba(14,165,233,0.2)!important;transition:all .2s!important;
-}
-.stDownloadButton>button:hover{background:#0284C7!important;box-shadow:0 4px 16px rgba(14,165,233,0.3)!important}
-
-/* Dataframe */
-.stDataFrame{background:#FFFFFF!important;border-radius:12px!important;border:1px solid #E2E8F0!important;box-shadow:0 1px 3px rgba(0,0,0,0.04)!important}
-
-/* Alerts — Light bg */
-.stError{background-color:#FEF2F2!important;color:#DC2626!important;border:1px solid #FECACA!important;border-radius:10px!important}
-.stWarning{background-color:#FFFBEB!important;color:#B45309!important;border:1px solid #FDE68A!important;border-radius:10px!important}
-.stSuccess{background-color:#F0FDF4!important;color:#059669!important;border:1px solid #BBF7D0!important;border-radius:10px!important}
-.stInfo{background-color:#F0F9FF!important;color:#0369A1!important;border:1px solid #BAE6FD!important;border-radius:10px!important}
-
-/* Multiselect */
-.stMultiSelect>div>div{background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important}
-.stMultiSelect>div>div>div{color:#0F172A!important}
+.stButton>button[kind="primary"]{background:#0B0F19!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;padding:12px 24px!important}
+.stDownloadButton>button{background:#0EA5E9!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR CONTENT
+# SIDEBAR RENDER
 # ==========================================
+st.sidebar.markdown('<div class="sb-header-title">KCCL Bangla</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
+page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
+
+# Persistent Logout block safely attached to bottom container
 with st.sidebar:
-    st.markdown('<div class="sb-kccl-header">KCCL Bangla</div>', unsafe_allow_html=True)
-
-    # Navigation label
-    sn1, sn2, sn3 = st.sidebar.columns([0.5, 1.5, 0.5])
-    with sn2:
-        st.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
-
-    page = st.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
-
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    if st.button("Logout", use_container_width=True):
+    st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
+    if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
         st.session_state["logged_in"] = False
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # UNITS & CONFIG
@@ -380,7 +298,7 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# MAIN APP LOGIC
+# CORE CONTROLLERS
 # ==========================================
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
@@ -390,7 +308,7 @@ p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
-# --- Dashboard ---
+# --- Dashboard View ---
 if page == "Dashboard":
     if df_p.empty:
         st.info("No master entries. Populate tpl_inv_products in backend.")
@@ -429,13 +347,21 @@ if page == "Dashboard":
         pid = row["id"]
         nm = row["product_name"]
         unit = row["default_unit"]
-        total = safe_num(row.get("total_added_to_system", 0), 0)
-        stk = get_stock(df_t, pid)
-        dc = dot_cls(stk, total)
-        stk_str = "{:.0f}".format(stk)
-        total_int = str(int(total))
+        
+        # FIXED count logic: Sum ONLY UPLOAD transactions from ledger safely
+        total_uploads = 0.0
+        if not df_t.empty:
+            total_uploads = pd.to_numeric(
+                df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))]["quantity"], 
+                errors="coerce"
+            ).fillna(0).sum()
 
-        sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total)})
+        stk = get_stock(df_t, pid)
+        dc = dot_cls(stk, total_uploads)
+        stk_str = "{:.0f}".format(stk)
+        total_int = str(int(total_uploads))
+
+        sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
         card_html = (
             '<div class="p-card"><div class="p-top">'
@@ -482,9 +408,9 @@ if page == "Dashboard":
                 ec = [c for c in ["created_at","Product","item_code","serial_number","quantity","unit","issued_to","invoice_no"] if c in df_is.columns]
                 st.download_button("Download " + sel + " Logs", data=to_csv(df_is[ec]), file_name="AssetFlow_" + sel.lower().replace(" ","_") + "_Issued_" + DT_STR + ".csv", mime="text/csv", key="d3")
             else:
-                st.markdown('<p style="font-size:11px;color:#DC2626;margin-top:4px;font-weight:600">No issue records found.</p>', unsafe_allow_html=True)
+                st.markdown('<p style="font-size:11px;color:#EF4444;margin-top:4px;font-weight:600">No issue records found.</p>', unsafe_allow_html=True)
 
-# --- Transaction ---
+# --- Transaction View ---
 elif page == "Transaction":
     if df_p.empty:
         st.warning("Add products to master catalog first.")
@@ -512,19 +438,13 @@ elif page == "Transaction":
 
     if submitted:
         errs = []
-        if not item_code.strip():
-            errs.append("Item Code is required.")
-        if not serial.strip():
-            errs.append("Serial Number is required.")
-        if qty <= 0:
-            errs.append("Quantity must be greater than zero.")
-        if action != "UPLOAD" and not issued_to.strip():
-            errs.append("Issued To is required for ISSUE/RETURN.")
-        if not invoice.strip():
-            errs.append("Invoice / DC No is required.")
+        if not item_code.strip(): errs.append("Item Code is required.")
+        if not serial.strip(): errs.append("Serial Number is required.")
+        if qty <= 0: errs.append("Quantity must be greater than zero.")
+        if action != "UPLOAD" and not issued_to.strip(): errs.append("Issued To is required for ISSUE/RETURN.")
+        if not invoice.strip(): errs.append("Invoice / DC No is required.")
         if errs:
-            for e in errs:
-                st.error(e)
+            for e in errs: st.error(e)
             st.stop()
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
@@ -546,22 +466,11 @@ elif page == "Transaction":
                 }
                 try:
                     res = supabase.table("tpl_inv_transactions").insert(payload).execute()
-                    if res.data:
-                        ok += 1
+                    if res.data: ok += 1
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
-
-            # *** AUTO-UPDATE total_added_to_system ON UPLOAD ONLY ***
             if ok > 0:
-                try:
-                    curr_res = supabase.table("tpl_inv_products").select("total_added_to_system").eq("id", pid).execute()
-                    curr_val = safe_num(curr_res.data[0]["total_added_to_system"]) if curr_res.data else 0.0
-                    new_val = curr_val + (qty * ok)
-                    supabase.table("tpl_inv_products").update({"total_added_to_system": new_val}).eq("id", pid).execute()
-                except Exception as ex:
-                    st.warning("Saved but total counter update failed: " + str(ex))
-
-                st.success("Uploaded " + str(ok) + " item(s)! Total counter updated.")
+                st.success("Uploaded " + str(ok) + " item(s) successfully!")
                 load_data.clear()
                 st.rerun()
         else:
@@ -577,7 +486,7 @@ elif page == "Transaction":
                     if match.empty:
                         st.error("Serial '" + sn + "' not found for '" + ic + "'!")
                         st.stop()
-
+            
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
                 if qty > cs:
@@ -601,7 +510,7 @@ elif page == "Transaction":
             except Exception as ex:
                 st.error("DB Error: " + str(ex))
 
-# --- Reports ---
+# --- Reports View ---
 elif page == "Reports":
     if df_t.empty:
         st.info("No transaction data available.")
@@ -611,7 +520,7 @@ elif page == "Reports":
     if not df_p.empty:
         pmap = df_p.set_index("id")["product_name"].to_dict()
         df_r["product_name"] = df_r["product_id"].map(pmap).fillna("Unknown")
-
+    
     df_r["created_at"] = pd.to_datetime(df_r["created_at"], errors="coerce")
     df_r["_d"] = df_r["created_at"].dt.date
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
@@ -619,32 +528,21 @@ elif page == "Reports":
 
     st.markdown('<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns(5)
-    with f1:
-        df_ = st.date_input("From", value=mn, key="rf")
-    with f2:
-        dt_ = st.date_input("To", value=mx, key="rt")
-    with f3:
-        it_ = st.multiselect("Issued To", sorted(df_r["issued_to"].dropna().unique()), key="ri")
-    with f4:
-        im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
-    with f5:
-        st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
-
+    with f1: df_ = st.date_input("From", value=mn, key="rf")
+    with f2: dt_ = st.date_input("To", value=mx, key="rt")
+    with f3: it_ = st.multiselect("Issued To", sorted(df_r["issued_to"].dropna().unique()), key="ri")
+    with f4: im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
+    with f5: st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
+    
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
     df_f = df_r.copy()
-    if df_ != mn:
-        df_f = df_f[df_f["_d"] >= df_]
-    if dt_ != mx:
-        df_f = df_f[df_f["_d"] <= dt_]
-    if it_:
-        df_f = df_f[df_f["issued_to"].isin(it_)]
-    if im_:
-        df_f = df_f[df_f["product_name"].isin(im_)]
-    if st_:
-        df_f = df_f[df_f["action_type"].isin(st_)]
-    if iv_:
-        df_f = df_f[df_f["invoice_no"].isin(iv_)]
+    if df_ != mn: df_f = df_f[df_f["_d"] >= df_]
+    if dt_ != mx: df_f = df_f[df_f["_d"] <= dt_]
+    if it_: df_f = df_f[df_f["issued_to"].isin(it_)]
+    if im_: df_f = df_f[df_f["product_name"].isin(im_)]
+    if st_: df_f = df_f[df_f["action_type"].isin(st_)]
+    if iv_: df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
     r1, r2 = st.columns([2, 1])
     with r1:
