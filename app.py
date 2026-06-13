@@ -12,28 +12,22 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — COOKIES + QUERY PARAMS
+# PERSISTENT AUTH — 3-LAYER (JS Cookie + Streamlit Cookie + Query Param)
 # ==========================================
-AUTH_COOKIE = "kccl_auth"
-
 _persistent = False
-# Method 1: Cookies (most reliable across refresh)
 try:
-    if hasattr(st, "context") and hasattr(st.context, "cookies"):
-        _cv = st.context.cookies.get(AUTH_COOKIE, "")
-        if str(_cv) == "1":
-            _persistent = True
+    _av = st.query_params.get("auth", "")
+    if isinstance(_av, list):
+        _av = _av[0] if _av else ""
+    if str(_av) == "1":
+        _persistent = True
 except Exception:
     pass
-# Method 2: Query params fallback
 if not _persistent:
     try:
-        _qp = st.query_params.to_dict() if hasattr(st.query_params, "to_dict") else {}
-        _av = _qp.get("auth", "")
-        if isinstance(_av, list):
-            _av = _av[0] if _av else ""
-        if str(_av) == "1":
-            _persistent = True
+        if hasattr(st, "context") and hasattr(st.context, "cookies"):
+            if str(st.context.cookies.get("kccl_auth", "")) == "1":
+                _persistent = True
     except Exception:
         pass
 
@@ -42,30 +36,30 @@ if "logged_in" not in st.session_state:
 
 def _set_auth(val):
     st.session_state["logged_in"] = val
-    try:
-        if hasattr(st, "context") and hasattr(st.context, "cookies"):
-            if val:
-                st.context.cookies.set(AUTH_COOKIE, "1")
-            else:
-                st.context.cookies.delete(AUTH_COOKIE)
-    except Exception:
-        pass
-    try:
-        if val:
+    if val:
+        st.components.v1.html(
+            '<script>document.cookie="kccl_auth=1;path=/;max-age=86400;SameSite=Lax";</script>',
+            height=0, key="_sc"
+        )
+        try:
             st.query_params["auth"] = "1"
-        else:
+        except Exception:
+            pass
+    else:
+        st.components.v1.html(
+            '<script>document.cookie="kccl_auth=;path=/;max-age=0";</script>',
+            height=0, key="_dc"
+        )
+        try:
+            del st.query_params["auth"]
+        except Exception:
             try:
-                del st.query_params["auth"]
+                st.query_params.pop("auth", None)
             except Exception:
-                try:
-                    st.query_params.pop("auth", None)
-                except Exception:
-                    pass
-    except Exception:
-        pass
+                pass
 
 # ==========================================
-# PAGE CONFIG — MUST BE FIRST STREAMLIT CALL
+# PAGE CONFIG
 # ==========================================
 st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide", initial_sidebar_state="expanded")
 
@@ -73,59 +67,32 @@ st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide",
 # LOGIN PAGE
 # ==========================================
 if not st.session_state["logged_in"]:
+    st.components.v1.html("""<script>
+    (function(){
+        if(document.cookie.indexOf('kccl_auth=1')!==-1){
+            var u=new URL(location.href);
+            u.searchParams.set('auth','1');
+            if(location.search!==u.search) location.replace(u.toString());
+        }
+    })();
+    </script>""", height=0, key="_ac")
+
     st.markdown("""<style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     section[data-testid='stSidebar']{display:none!important}
     header[data-testid='stHeader']{display:none!important}
     footer{visibility:hidden!important}
     #MainMenu{visibility:hidden!important}
-
     .stApp{background:#F1F5F9!important}
-    .block-container{
-        display:flex!important;
-        flex-direction:column!important;
-        justify-content:center!important;
-        align-items:center!important;
-        min-height:100vh!important;
-        max-width:100%!important;
-        padding:20px!important;
-    }
-    .block-container > div[data-testid="stVerticalBlock"] {
-        width:100%!important;
-        max-width:440px!important;
-    }
-    .login-card {
-        background:#FFFFFF!important;
-        border-radius:20px!important;
-        padding:45px 40px!important;
-        width:100%!important;
-        box-shadow:0 25px 60px rgba(0,0,0,0.06)!important;
-        text-align:center!important;
-    }
-    .login-brand {
-        font-size:36px!important;
-        font-weight:800!important;
-        color:#0B0F19!important;
-        margin-bottom:35px!important;
-        font-family:'Inter',sans-serif!important;
-        letter-spacing:-1px!important;
-    }
-    .login-card label p {
-        color:#334155!important;font-size:12px!important;font-weight:700!important;text-align:left!important;
-    }
-    .login-card input {
-        background:#F8FAFC!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;
-    }
-    .login-card input:focus {
-        border-color:#0EA5E9!important;
-    }
-    .login-card button {
-        background:#0B0F19!important;color:#FFFFFF!important;border:none!important;border-radius:10px!important;
-        font-weight:700!important;padding:12px!important;margin-top:10px!important;
-    }
-    .login-card button:hover {
-        background:#1E293B!important;
-    }
+    .block-container{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;min-height:100vh!important;max-width:100%!important;padding:20px!important}
+    .block-container > div[data-testid="stVerticalBlock"]{width:100%!important;max-width:440px!important}
+    .login-card{background:#FFFFFF!important;border-radius:20px!important;padding:45px 40px!important;width:100%!important;box-shadow:0 25px 60px rgba(0,0,0,0.06)!important;text-align:center!important}
+    .login-brand{font-size:36px!important;font-weight:800!important;color:#0B0F19!important;margin-bottom:35px!important;font-family:'Inter',sans-serif!important;letter-spacing:-1px!important}
+    .login-card label p{color:#334155!important;font-size:12px!important;font-weight:700!important;text-align:left!important}
+    .login-card input{background:#F8FAFC!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important}
+    .login-card input:focus{border-color:#0EA5E9!important}
+    .login-card button{background:#0B0F19!important;color:#FFFFFF!important;border:none!important;border-radius:10px!important;font-weight:700!important;padding:12px!important;margin-top:10px!important}
+    .login-card button:hover{background:#1E293B!important}
     </style>""", unsafe_allow_html=True)
 
     _, mid, _ = st.columns([1, 1.3, 1])
@@ -145,121 +112,50 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# MAIN APP CSS (DARK SIDEBAR + LIGHT MAIN)
+# MAIN APP CSS
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 .stApp{background:#F1F5F9!important;color:#0F172A!important;font-family:'Inter',system-ui,sans-serif!important}
 .block-container{padding:.8rem 2rem!important;max-width:1560px;margin:0 auto;position:relative;z-index:1}
 header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
 #MainMenu, footer{visibility:hidden!important}
-
-section[data-testid="stSidebar"] {
-    background:#0B0F19!important;
-    border-right:1px solid #1E293B!important;
-}
-section[data-testid="stSidebar"] > div:first-child {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100vh !important;
-}
-
-.sb-header-title {
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #FFFFFF !important;
-    text-align: center !important;
-    padding: 20px 10px 10px 10px !important;
-    letter-spacing: 0.5px !important;
-}
-.sb-nav-label {
-    font-size:11px!important;color:#94A3B8!important;text-transform:uppercase!important;
-    letter-spacing:1.5px!important;font-weight:700!important;padding:15px 0 5px 0!important;text-align:center!important;
-}
-
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div {
-    padding:10px 20px!important;border-left:4px solid transparent!important;
-    transition:none!important;margin:0!important;
-}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] label p {
-    color:#FFFFFF!important;font-size:14px!important;font-weight:600!important;
-}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover {
-    background:transparent!important;
-}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] {
-    background:#111827!important;border-left:4px solid #FFFFFF!important;
-}
-section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p {
-    font-weight:700!important;
-}
-
-.sb-logout-box {
-    margin-top: auto !important;
-    padding: 20px !important;
-    border-top: 1px solid #1E293B !important;
-    background: #0B0F19 !important;
-}
-.sb-logout-box button {
-    background: transparent !important;
-    color: #FFFFFF !important;
-    border: 1px solid #DC2626 !important;
-    border-radius: 8px !important;
-    padding: 8px !important;
-    font-weight: 600 !important;
-    font-size: 13px !important;
-}
-.sb-logout-box button:hover {
-    background: #DC2626 !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 4px 12px rgba(220,38,38,0.2) !important;
-}
-
-.stat-box {
-    background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:14px!important;
-    padding:20px 22px!important;min-height:100px!important;
-    display:flex!important;flex-direction:column!important;justify-content:center!important;
-    box-shadow:0 1px 3px rgba(0,0,0,0.04)!important;color:#0F172A!important;
-}
-.stat-lbl{font-size:11px!important;color:#64748B!important;text-transform:uppercase!important;letter-spacing:1px!important;font-weight:700!important}
-.stat-val{font-size:30px!important;font-weight:800!important;margin-top:6px!important;line-height:1!important;color:#0B0F19!important}
-
-.p-card{
-    background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;
-    padding:16px 18px!important;display:flex!important;flex-direction:column!important;
-    justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;
-    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease!important;
-}
+section[data-testid="stSidebar"]{background:#0B0F19!important;border-right:1px solid #1E293B!important}
+section[data-testid="stSidebar"] > div:first-child{display:flex!important;flex-direction:column!important;height:100vh!important}
+.sb-header-title{font-size:16px!important;font-weight:700!important;color:#FFFFFF!important;text-align:center!important;padding:20px 10px 10px 10px!important;letter-spacing:.5px!important}
+.sb-nav-label{font-size:11px!important;color:#94A3B8!important;text-transform:uppercase!important;letter-spacing:1.5px!important;font-weight:700!important;padding:15px 0 5px 0!important;text-align:center!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div{padding:10px 20px!important;border-left:4px solid transparent!important;transition:none!important;margin:0!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] label p{color:#FFFFFF!important;font-size:14px!important;font-weight:600!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover{background:transparent!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]{background:#111827!important;border-left:4px solid #FFFFFF!important}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p{font-weight:700!important}
+.sb-logout-box{margin-top:auto!important;padding:20px!important;border-top:1px solid #1E293B!important;background:#0B0F19!important}
+.sb-logout-box button{background:transparent!important;color:#FFFFFF!important;border:1px solid #DC2626!important;border-radius:8px!important;padding:8px!important;font-weight:600!important;font-size:13px!important}
+.sb-logout-box button:hover{background:#DC2626!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(220,38,38,0.2)!important}
+.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-bottom{display:flex!important;flex-direction:column!important;gap:2px!important;margin-top:6px!important}
 .p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1}
 .p-total{font-size:11px;color:#64748B!important;font-weight:600}
-
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-g{background:#059669}.dot-y{background:#D97706}.dot-r{background:#DC2626}
 .sec-h{font-size:15px!important;font-weight:800!important;color:#0B0F19!important;margin:22px 0 12px!important;padding-bottom:8px!important;border-bottom:2px solid #0B0F19!important}
-
 label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>label{font-size:12px!important;font-weight:700!important;color:#334155!important}
 .form-sec{font-size:11px!important;font-weight:800!important;color:#0B0F19!important;text-transform:uppercase!important;margin-bottom:12px!important;padding-bottom:6px!important;border-bottom:2px solid #0EA5E9!important;display:inline-block!important}
 .hint{font-size:11px!important;color:#94A3B8!important;margin-top:-2px!important}
-
-.stTextInput>div>div>input,.stSelectbox>div>div>select,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stDateInput>div>div>input{
-    background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;font-size:14px!important;
-}
+.stTextInput>div>div>input,.stSelectbox>div>div>select,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stDateInput>div>div>input{background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;font-size:14px!important}
 .stButton>button[kind="primary"]{background:#0B0F19!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;padding:12px 24px!important}
 .stDownloadButton>button{background:#0EA5E9!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR RENDER
+# SIDEBAR
 # ==========================================
 st.sidebar.markdown('<div class="sb-header-title">KCCL Bangla</div>', unsafe_allow_html=True)
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
-
 with st.sidebar:
     st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
     if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
@@ -268,7 +164,7 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# CONFIG & DATA LOAD
+# CONFIG & DATA
 # ==========================================
 UNITS = ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX", "KG", "GM", "SET", "PAIR", "ROLL", "CAN", "BOTTLE", "PACK", "SHEET", "BUNDLE", "TUBE", "GAL", "NOS", "KIT"]
 COLS_P = ["id", "product_name", "item_code", "default_unit", "total_added_to_system"]
@@ -296,6 +192,15 @@ def get_stock(dt, pid):
     rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
     return float((up + rt) - is_)
+
+def get_serial_net_issue(dt, item_code, serial):
+    """Per-serial net issue count: ISSUE - RETURN. >0 means currently issued out."""
+    if dt.empty or not serial or not item_code:
+        return 0
+    m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
+    issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+    returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+    return float(issues - returns)
 
 def dot_cls(s, t):
     if t <= 0:
@@ -340,7 +245,7 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# ROUTER & VIEWS
+# ROUTER
 # ==========================================
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
@@ -350,35 +255,13 @@ p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
-# --- Dashboard Page ---
+# ==========================================
+# DASHBOARD — No stat cards, straight to inventory + downloads
+# ==========================================
 if page == "Dashboard":
     if df_p.empty:
         st.info("No master entries found.")
         st.stop()
-
-    ts = 0.0
-    for _, row in df_p.iterrows():
-        ts += get_stock(df_t, row["id"])
-
-    im = 0.0
-    rm = 0.0
-    if not df_t.empty:
-        dft = df_t.copy()
-        dft["created_at"] = pd.to_datetime(dft["created_at"], errors="coerce")
-        m = dft.dropna(subset=["created_at"])
-        mk = (m["created_at"].dt.month == NOW.month) & (m["created_at"].dt.year == NOW.year)
-        im = safe_num(m[mk & (m["action_type"].eq("ISSUE"))]["quantity"].sum())
-        rm = safe_num(m[mk & (m["action_type"].eq("RETURN"))]["quantity"].sum())
-
-    s1, s2, s3, s4 = st.columns(4)
-    with s1:
-        st.markdown('<div class="stat-box"><div class="stat-lbl">Active Items</div><div class="stat-val">' + str(len(df_p)) + '</div></div>', unsafe_allow_html=True)
-    with s2:
-        st.markdown('<div class="stat-box"><div class="stat-lbl">Total Stock</div><div class="stat-val">' + "{:,.1f}".format(ts) + '</div></div>', unsafe_allow_html=True)
-    with s3:
-        st.markdown('<div class="stat-box"><div class="stat-lbl">Issued (Month)</div><div class="stat-val">' + "{:,.1f}".format(im) + '</div></div>', unsafe_allow_html=True)
-    with s4:
-        st.markdown('<div class="stat-box"><div class="stat-lbl">Returned (Month)</div><div class="stat-val">' + "{:,.1f}".format(rm) + '</div></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sec-h">Live Inventory Distribution</div>', unsafe_allow_html=True)
     cards = st.columns(5)
@@ -409,7 +292,7 @@ if page == "Dashboard":
             '<span class="dot ' + dc + '"></span>'
             '<div class="p-name">' + nm + '</div></div>'
             '<div class="p-bottom">'
-            '<div class="p-stock">' + stk_str + ' <span style="font-size:13px; font-weight:500; color:#64748B;">In Stock</span></div>'
+            '<div class="p-stock">' + stk_str + ' <span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span></div>'
             '<div class="p-total">Added: ' + total_int + ' ' + unit + '</div>'
             '</div></div>'
         )
@@ -428,7 +311,7 @@ if page == "Dashboard":
             df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
-            ec = [c for c in ["created_at","product_name","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type"] if c in df_d.columns]
+            ec = [c for c in ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"] if c in df_d.columns]
             st.download_button("Download Full Dump CSV", data=to_csv(df_d[ec]), file_name="AssetFlow_FullDump_" + DT_STR + ".csv", mime="text/csv", key="d1")
 
     with d2:
@@ -446,12 +329,14 @@ if page == "Dashboard":
                 df_is["created_at"] = df_is["created_at"].apply(ind_dt)
                 df_is["Product"] = sel
                 df_is = explode_serials(df_is)
-                ec = [c for c in ["created_at","Product","item_code","serial_number","quantity","unit","issued_to","invoice_no"] if c in df_is.columns]
-                st.download_button("Download " + sel + " Logs", data=to_csv(df_is[ec]), file_name="AssetFlow_" + sel.lower().replace(" ","_") + "_Issued_" + DT_STR + ".csv", mime="text/csv", key="d3")
+                ec = [c for c in ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no"] if c in df_is.columns]
+                st.download_button("Download " + sel + " Logs", data=to_csv(df_is[ec]), file_name="AssetFlow_" + sel.lower().replace(" ", "_") + "_Issued_" + DT_STR + ".csv", mime="text/csv", key="d3")
             else:
                 st.markdown('<p style="font-size:11px;color:#EF4444;margin-top:4px;font-weight:600">No issue records found.</p>', unsafe_allow_html=True)
 
-# --- Transaction Page ---
+# ==========================================
+# TRANSACTION — Serial-level ISSUE/RETURN guard
+# ==========================================
 elif page == "Transaction":
     if df_p.empty:
         st.warning("Add products to master catalog first.")
@@ -479,29 +364,33 @@ elif page == "Transaction":
 
     if submitted:
         errs = []
-        if not item_code.strip(): errs.append("Item Code is required.")
-        if not serial.strip(): errs.append("Serial Number is required.")
-        if qty <= 0: errs.append("Quantity must be greater than zero.")
-        if action != "UPLOAD" and not issued_to.strip(): errs.append("Issued To is required for ISSUE/RETURN.")
-        if not invoice.strip(): errs.append("Invoice / DC No is required.")
+        if not item_code.strip():
+            errs.append("Item Code is required.")
+        if not serial.strip():
+            errs.append("Serial Number is required.")
+        if qty <= 0:
+            errs.append("Quantity must be greater than zero.")
+        if action != "UPLOAD" and not issued_to.strip():
+            errs.append("Issued To is required for ISSUE / RETURN.")
+        if not invoice.strip():
+            errs.append("Invoice / DC No is required.")
         if errs:
-            for e in errs: st.error(e)
+            for e in errs:
+                st.error(e)
             st.stop()
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
+        # ---------- UPLOAD ----------
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
             serials = [s.strip() for s in serial.split(",") if s.strip()]
-
             if not codes:
                 st.error("No valid Item Code provided.")
                 st.stop()
 
             num_entries = max(len(codes), len(serials))
-            # FIX: divide total quantity equally among all serial entries
             per_qty = round(qty / num_entries, 3)
-            # last entry absorbs rounding diff so total always matches
             distributed = per_qty * (num_entries - 1)
             last_qty = round(qty - distributed, 3)
 
@@ -510,7 +399,6 @@ elif page == "Transaction":
                 code = codes[i] if i < len(codes) else (codes[-1] if codes else "")
                 sn = serials[i] if i < len(serials) else ""
                 entry_qty = last_qty if i == num_entries - 1 else per_qty
-
                 payload = {
                     "product_id": pid, "item_code": code, "serial_number": sn,
                     "quantity": entry_qty, "unit": unit, "issued_to": "",
@@ -519,43 +407,54 @@ elif page == "Transaction":
                 }
                 try:
                     res = supabase.table("tpl_inv_transactions").insert(payload).execute()
-                    if res.data: ok += 1
+                    if res.data:
+                        ok += 1
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
             if ok > 0:
                 st.success("Uploaded " + str(ok) + " item(s) — " + "{:.3f}".format(per_qty) + " " + unit + " each (total " + "{:.3f}".format(qty) + ")")
                 load_data.clear()
                 st.rerun()
-        else:
+
+        # ---------- ISSUE ----------
+        elif action == "ISSUE":
             ic = item_code.strip()
             sn = serial.strip()
+
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
+                # Check 1: item_code must exist in uploads
                 if ic not in uploads["item_code"].values:
                     st.error("Item Code '" + ic + "' not found in uploads!")
                     st.stop()
+                # Check 2: serial must exist in uploads for that item_code
                 if sn:
                     match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
                     if match.empty:
-                        st.error("Serial '" + sn + "' not found for '" + ic + "'!")
+                        st.error("Serial '" + sn + "' not found in uploads for '" + ic + "'!")
+                        st.stop()
+                    # Check 3: serial must NOT be currently issued out
+                    net = get_serial_net_issue(df_t, ic, sn)
+                    if net > 0:
+                        st.error("Serial '" + sn + "' is already issued out! Return it first before re-issuing.")
                         st.stop()
 
-            if action == "ISSUE":
-                cs = get_stock(df_t, pid)
-                if qty > cs:
-                    st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
-                    st.stop()
+            # Check 4: product-level stock
+            cs = get_stock(df_t, pid)
+            if qty > cs:
+                st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
+                st.stop()
 
             payload = {
                 "product_id": pid, "item_code": ic, "serial_number": sn,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
-                "invoice_no": invoice.strip(), "action_type": action,
+                "invoice_no": invoice.strip(), "action_type": "ISSUE",
                 "created_at": datetime.now().isoformat()
             }
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.success("Committed: " + action + " " + "{:.3f}".format(qty) + " " + unit + " - " + ic)
+                    st.success("Issued: " + "{:.3f}".format(qty) + " " + unit + " — " + ic + " / " + sn)
                     load_data.clear()
                     st.rerun()
                 else:
@@ -563,7 +462,45 @@ elif page == "Transaction":
             except Exception as ex:
                 st.error("DB Error: " + str(ex))
 
-# --- Reports Page ---
+        # ---------- RETURN ----------
+        elif action == "RETURN":
+            ic = item_code.strip()
+            sn = serial.strip()
+
+            if not df_t.empty:
+                # Check 1: item_code must exist
+                all_codes = df_t["item_code"].values
+                if ic not in all_codes:
+                    st.error("Item Code '" + ic + "' not found in any transaction!")
+                    st.stop()
+
+                # Check 2: serial must have been ISSUED (net issue > 0)
+                if sn:
+                    net = get_serial_net_issue(df_t, ic, sn)
+                    if net <= 0:
+                        st.error("Serial '" + sn + "' has NOT been issued or already returned! Cannot return.")
+                        st.stop()
+
+            payload = {
+                "product_id": pid, "item_code": ic, "serial_number": sn,
+                "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
+                "invoice_no": invoice.strip(), "action_type": "RETURN",
+                "created_at": datetime.now().isoformat()
+            }
+            try:
+                res = supabase.table("tpl_inv_transactions").insert(payload).execute()
+                if res.data:
+                    st.success("Returned: " + "{:.3f}".format(qty) + " " + unit + " — " + ic + " / " + sn)
+                    load_data.clear()
+                    st.rerun()
+                else:
+                    st.error("Insert failed. Check RLS.")
+            except Exception as ex:
+                st.error("DB Error: " + str(ex))
+
+# ==========================================
+# REPORTS
+# ==========================================
 elif page == "Reports":
     if df_t.empty:
         st.info("No transaction data available.")
@@ -581,21 +518,32 @@ elif page == "Reports":
 
     st.markdown('<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>', unsafe_allow_html=True)
     f1, f2, f3, f4, f5 = st.columns(5)
-    with f1: df_ = st.date_input("From", value=mn, key="rf")
-    with f2: dt_ = st.date_input("To", value=mx, key="rt")
-    with f3: it_ = st.multiselect("Issued To", sorted(df_r["issued_to"].dropna().unique()), key="ri")
-    with f4: im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
-    with f5: st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
+    with f1:
+        df_ = st.date_input("From", value=mn, key="rf")
+    with f2:
+        dt_ = st.date_input("To", value=mx, key="rt")
+    with f3:
+        it_ = st.multiselect("Issued To", sorted(df_r["issued_to"].dropna().unique()), key="ri")
+    with f4:
+        im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
+    with f5:
+        st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
 
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
     df_f = df_r.copy()
-    if df_ != mn: df_f = df_f[df_f["_d"] >= df_]
-    if dt_ != mx: df_f = df_f[df_f["_d"] <= dt_]
-    if it_: df_f = df_f[df_f["issued_to"].isin(it_)]
-    if im_: df_f = df_f[df_f["product_name"].isin(im_)]
-    if st_: df_f = df_f[df_f["action_type"].isin(st_)]
-    if iv_: df_f = df_f[df_f["invoice_no"].isin(iv_)]
+    if df_ != mn:
+        df_f = df_f[df_f["_d"] >= df_]
+    if dt_ != mx:
+        df_f = df_f[df_f["_d"] <= dt_]
+    if it_:
+        df_f = df_f[df_f["issued_to"].isin(it_)]
+    if im_:
+        df_f = df_f[df_f["product_name"].isin(im_)]
+    if st_:
+        df_f = df_f[df_f["action_type"].isin(st_)]
+    if iv_:
+        df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
     r1, r2 = st.columns([2, 1])
     with r1:
@@ -605,15 +553,19 @@ elif page == "Reports":
             df_ex = df_f.copy()
             df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             df_ex = explode_serials(df_ex)
-            ec = [c for c in ["created_at","product_name","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type"] if c in df_ex.columns]
+            ec = [c for c in ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"] if c in df_ex.columns]
             st.download_button("Export Filtered Logs", data=to_csv(df_ex[ec]), file_name="AssetFlow_Report_" + DT_STR + ".csv", mime="text/csv", key="dr")
 
     if not df_f.empty:
         df_s = df_f.copy()
         df_s["created_at"] = df_s["created_at"].apply(ind_dt)
         df_s = explode_serials(df_s)
-        ec = [c for c in ["created_at","product_name","item_code","serial_number","quantity","unit","issued_to","invoice_no","action_type"] if c in df_s.columns]
-        df_s = df_s[ec].rename(columns={"created_at":"Date","product_name":"Product","item_code":"Code","serial_number":"Serial","quantity":"Qty","unit":"Unit","issued_to":"Issued To","invoice_no":"Invoice","action_type":"Action"})
+        ec = [c for c in ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"] if c in df_s.columns]
+        df_s = df_s[ec].rename(columns={
+            "created_at": "Date", "product_name": "Product", "item_code": "Code",
+            "serial_number": "Serial", "quantity": "Qty", "unit": "Unit",
+            "issued_to": "Issued To", "invoice_no": "Invoice", "action_type": "Action"
+        })
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
