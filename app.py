@@ -12,7 +12,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — 3-LAYER (JS Cookie + Streamlit Cookie + Query Param)
+# PERSISTENT AUTH — 3-LAYER
 # ==========================================
 _persistent = False
 try:
@@ -39,7 +39,7 @@ def _set_auth(val):
     if val:
         st.components.v1.html(
             '<script>document.cookie="kccl_auth=1;path=/;max-age=86400;SameSite=Lax";</script>',
-            height=0, key="_sc"
+            height=0
         )
         try:
             st.query_params["auth"] = "1"
@@ -48,7 +48,7 @@ def _set_auth(val):
     else:
         st.components.v1.html(
             '<script>document.cookie="kccl_auth=;path=/;max-age=0";</script>',
-            height=0, key="_dc"
+            height=0
         )
         try:
             del st.query_params["auth"]
@@ -75,7 +75,7 @@ if not st.session_state["logged_in"]:
             if(location.search!==u.search) location.replace(u.toString());
         }
     })();
-    </script>""", height=0, key="_ac")
+    </script>""", height=0)
 
     st.markdown("""<style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -194,7 +194,6 @@ def get_stock(dt, pid):
     return float((up + rt) - is_)
 
 def get_serial_net_issue(dt, item_code, serial):
-    """Per-serial net issue count: ISSUE - RETURN. >0 means currently issued out."""
     if dt.empty or not serial or not item_code:
         return 0
     m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
@@ -256,7 +255,7 @@ if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
 # ==========================================
-# DASHBOARD — No stat cards, straight to inventory + downloads
+# DASHBOARD
 # ==========================================
 if page == "Dashboard":
     if df_p.empty:
@@ -335,7 +334,7 @@ if page == "Dashboard":
                 st.markdown('<p style="font-size:11px;color:#EF4444;margin-top:4px;font-weight:600">No issue records found.</p>', unsafe_allow_html=True)
 
 # ==========================================
-# TRANSACTION — Serial-level ISSUE/RETURN guard
+# TRANSACTION
 # ==========================================
 elif page == "Transaction":
     if df_p.empty:
@@ -381,7 +380,6 @@ elif page == "Transaction":
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
-        # ---------- UPLOAD ----------
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
             serials = [s.strip() for s in serial.split(",") if s.strip()]
@@ -416,30 +414,25 @@ elif page == "Transaction":
                 load_data.clear()
                 st.rerun()
 
-        # ---------- ISSUE ----------
         elif action == "ISSUE":
             ic = item_code.strip()
             sn = serial.strip()
 
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
-                # Check 1: item_code must exist in uploads
                 if ic not in uploads["item_code"].values:
                     st.error("Item Code '" + ic + "' not found in uploads!")
                     st.stop()
-                # Check 2: serial must exist in uploads for that item_code
                 if sn:
                     match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
                     if match.empty:
                         st.error("Serial '" + sn + "' not found in uploads for '" + ic + "'!")
                         st.stop()
-                    # Check 3: serial must NOT be currently issued out
                     net = get_serial_net_issue(df_t, ic, sn)
                     if net > 0:
                         st.error("Serial '" + sn + "' is already issued out! Return it first before re-issuing.")
                         st.stop()
 
-            # Check 4: product-level stock
             cs = get_stock(df_t, pid)
             if qty > cs:
                 st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
@@ -462,19 +455,15 @@ elif page == "Transaction":
             except Exception as ex:
                 st.error("DB Error: " + str(ex))
 
-        # ---------- RETURN ----------
         elif action == "RETURN":
             ic = item_code.strip()
             sn = serial.strip()
 
             if not df_t.empty:
-                # Check 1: item_code must exist
                 all_codes = df_t["item_code"].values
                 if ic not in all_codes:
                     st.error("Item Code '" + ic + "' not found in any transaction!")
                     st.stop()
-
-                # Check 2: serial must have been ISSUED (net issue > 0)
                 if sn:
                     net = get_serial_net_issue(df_t, ic, sn)
                     if net <= 0:
