@@ -9,7 +9,6 @@ from datetime import datetime
 # ==========================================
 # Use environment variables for security. These fallbacks are for local testing only.
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co")
-# Note: Key in os.environ was misspelled "SUPABSE_KEY" in the original code, now fixed to "SUPABASE_KEY"
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -21,10 +20,12 @@ st.set_page_config(page_title="AssetFlow KCCL", page_icon="📦", layout="wide",
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
+if not st.session_state["logged_in"]:
+    st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
+
 # ==========================================
 # CUSTOM CSS THEME
 # ==========================================
-# This section injects custom CSS to style the app, including the sidebar.
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -62,21 +63,35 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #1E293B !important; /* Dark blue border */
 }
 
-/* Logo container styling (for center alignment) */
+/* ==========================================
+   FIXED: CRITICAL 100% PERFECT LOGO CENTERING 
+   ========================================== */
 .sb-logo {
     padding: 20px 8px 14px;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important; /* Horizontally center contents */
-    justify-content: center !important; /* Vertically center contents */
+    align-items: center !important;     /* Horizontally center contents */
+    justify-content: center !important;    /* Vertically center contents */
     gap: 4px !important;
     text-align: center !important;
+    width: 100% !important;
 }
+
+/* Overriding Streamlit's internal layout wrapper for the sidebar elements to achieve absolute centering */
+section[data-testid="stSidebar"] div[data-testid="stElementContainer"] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
 .sb-logo img {
     border-radius: 8px;
     max-width: 110px !important; /* Adjust size to fit better */
     height: auto;
-    display: block; /* Important for centering in flexbox */
+    display: block !important;
+    margin: 0 auto !important; /* Native block horizontal center alignment */
 }
 .sb-logo-name {
     font-size: 18px;
@@ -115,13 +130,33 @@ section[data-testid="stSidebar"] {
     text-align: center !important;
 }
 
-/* Navigation radio button visibility fixes */
+/* ==========================================
+   FIXED: RADIO / NAVIGATION LOOK WITH BORDER
+   ========================================== */
+section[data-testid="stRadio"] div[role="radiogroup"] > div {
+    padding: 2px 0px !important;
+    border-left: 4px solid transparent !important;
+    transition: none !important;
+}
+
+/* All Radio Options Text - Permanent White always visible */
 section[data-testid="stRadio"] label p {
-    color: #CBD5E1 !important; /* Grey text for unselected and radio label, was invisible */
-    font-weight: 500 !important;
+    color: #FFFFFF !important; 
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+/* Remove Hover backgrounds completely to maintain steady state */
+section[data-testid="stRadio"] div[role="radiogroup"] > div:hover {
+    background: transparent !important;
+}
+
+/* Selected / Active State — Left White Border line stays on */
+section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] {
+    background: #111827 !important; /* Subtle dark emphasis on selected block */
+    border-left: 4px solid #FFFFFF !important;
 }
 section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p {
-    color: #FFFFFF !important; /* White text for selected page */
     font-weight: 700 !important;
 }
 
@@ -175,54 +210,14 @@ section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, .1);
 }
-.p-top {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    overflow: hidden;
-}
-.p-bottom {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-}
-.p-name {
-    font-size: 13px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.p-stock {
-    font-size: 20px;
-    font-weight: 800;
-    color: #16A34A !important;
-    line-height: 1;
-    text-align: right;
-}
-.p-total {
-    font-size: 10px;
-    color: #475569 !important;
-    font-weight: 600;
-}
-.dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.dot-g { background: #16A34A; }
-.dot-y { background: #D97706; }
-.dot-r { background: #DC2626; }
-.sec-h {
-    font-size: 14px;
-    font-weight: 800;
-    color: #FFFFFF !important;
-    margin: 18px 0 10px;
-    padding-bottom: 6px;
-    border-bottom: 2px solid #FFFFFF;
-}
+.p-top { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+.p-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
+.p-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-stock { font-size: 20px; font-weight: 800; color: #16A34A !important; line-height: 1; text-align: right; }
+.p-total { font-size: 10px; color: #475569 !important; font-weight: 600; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-g { background: #16A34A; } .dot-y { background: #D97706; } .dot-r { background: #DC2626; }
+.sec-h { font-size: 14px; font-weight: 800; color: #FFFFFF !important; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #FFFFFF; }
 
 /* Button & input styling to work against dark background */
 .stDownloadButton>button {
@@ -237,8 +232,8 @@ section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]
     box-shadow: 0 2px 8px rgba(14, 165, 233, .25) !important;
 }
 .stButton>button[kind="primary"] {
-    background: #FFFFFF !important; /* White button on dark background */
-    color: #0B0F19 !important; /* Dark text */
+    background: #FFFFFF !important;
+    color: #0B0F19 !important;
     border: none !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
@@ -250,52 +245,14 @@ section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]
     border-radius: 6px !important;
     color: #0A0F1D !important;
 }
-.stTextInput>div>div>input:focus {
-    border-color: #38BDF8 !important;
-}
+label p, .stDateInput>label, .stTextArea>label { font-size: 12px !important; font-weight: 700 !important; color: #FFFFFF !important; }
+.hint { font-size: 11px; color: #94A3B8 !important; margin-top: -2px; margin-bottom: 8px; }
+.form-sec { font-size: 11px; font-weight: 700; color: #38BDF8 !important; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; }
 
-/* Form and UI labels */
-label p, .stDateInput>label, .stTextArea>label {
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    color: #FFFFFF !important;
-}
-.hint {
-    font-size: 11px;
-    color: #94A3B8 !important;
-    margin-top: -2px;
-    margin-bottom: 8px;
-}
-.form-sec {
-    font-size: 11px;
-    font-weight: 700;
-    color: #38BDF8 !important;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    margin-bottom: 10px;
-}
-
-/* Dataframe and Alerts (Alerts need special handling for visibility) */
-.stError {
-    background-color: rgba(220, 38, 38, 0.15) !important;
-    color: #EF4444 !important;
-    border: 1px solid #DC2626 !important;
-}
-.stWarning {
-    background-color: rgba(217, 119, 6, 0.15) !important;
-    color: #FBBF24 !important;
-    border: 1px solid #D97706 !important;
-}
-.stSuccess {
-    background-color: rgba(22, 163, 74, 0.15) !important;
-    color: #4ADE80 !important;
-    border: 1px solid #16A34A !important;
-}
-.stInfo {
-    background-color: rgba(14, 165, 233, 0.15) !important;
-    color: #38BDF8 !important;
-    border: 1px solid #0EA5E9 !important;
-}
+.stError { background-color: rgba(220, 38, 38, 0.15) !important; color: #EF4444 !important; border: 1px solid #DC2626 !important; }
+.stWarning { background-color: rgba(217, 119, 6, 0.15) !important; color: #FBBF24 !important; border: 1px solid #D97706 !important; }
+.stSuccess { background-color: rgba(22, 163, 74, 0.15) !important; color: #4ADE80 !important; border: 1px solid #16A34A !important; }
+.stInfo { background-color: rgba(14, 165, 233, 0.15) !important; color: #38BDF8 !important; border: 1px solid #0EA5E9 !important; }
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -376,7 +333,6 @@ def explode_serials(df):
 # ==========================================
 # AUTHENTICATION HANDLING
 # ==========================================
-# Simplified: No form-wrap box, just inputs centered on page
 if not st.session_state["logged_in"]:
     _, mid, _ = st.columns([1.3, 1.4, 1.3])
     with mid:
@@ -408,11 +364,9 @@ if not st.session_state["logged_in"]:
 # ==========================================
 # SIDEBAR NAVIGATION & LOGO
 # ==========================================
-# Re-defined logo area to use centering CSS class
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
     try:
-        # Load local file for centering, Streamlit handles scaling via width
         st.sidebar.image("assets/logo.png", width=110)
     except Exception:
         pass
@@ -425,18 +379,15 @@ st.sidebar.markdown(
 )
 
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
-# The CSS injected earlier makes unselected labels grey and visible against the dark background.
 page = st.sidebar.radio("", ["Dashboard", "Transaction", "Reports"], label_visibility="collapsed")
 
 # ==========================================
 # MAIN APP LOGIC
 # ==========================================
-# Load data once at the start of app loop
 NOW = datetime.now()
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
-# Create product map for later use in exports
 p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
@@ -499,14 +450,12 @@ if page == "Dashboard":
         pid = row["id"]
         nm = row["product_name"]
         unit = row["default_unit"]
-        # Assuming database has "total_added_to_system" column for target stock calc
         total = safe_num(row.get("total_added_to_system", 0), 0)
         stk = get_stock(df_t, pid)
         dc = dot_cls(stk, total)
         stk_str = "{:.0f}".format(stk)
         total_int = str(int(total))
 
-        # Build list for system summary export
         sum_rows.append({
             "Product Name": nm,
             "In Stock": round(stk, 3),
@@ -532,7 +481,6 @@ if page == "Dashboard":
 
     df_sum = pd.DataFrame(sum_rows)
 
-    # Extraction section
     st.markdown('<div class="sec-h">Data Extraction Hub</div>', unsafe_allow_html=True)
     d1, d2, d3 = st.columns(3)
 
@@ -544,7 +492,6 @@ if page == "Dashboard":
             df_d["created_at"] = df_d["created_at"].apply(ind_dt)
             df_d = explode_serials(df_d)
             ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
-            # Ensure only columns existing in df are selected
             ec = [c for c in ec if c in df_d.columns]
             st.download_button(
                 "Download Full Dump CSV",
@@ -570,7 +517,6 @@ if page == "Dashboard":
         sel = st.selectbox("Select Product", df_p["product_name"].tolist(), key="cs", label_visibility="collapsed")
         if sel:
             tid = df_p[df_p["product_name"].eq(sel)]["id"].values[0]
-            # Select ISSUES only for targeted export
             df_is = df_t[(df_t["product_id"].eq(tid)) & (df_t["action_type"].eq("ISSUE"))].copy()
             if not df_is.empty:
                 df_is["created_at"] = df_is["created_at"].apply(ind_dt)
@@ -642,7 +588,6 @@ elif page == "Transaction":
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
 
         if action == "UPLOAD":
-            # Bulk processing via comma separation
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
             serials = [s.strip() for s in serial.split(",") if s.strip()]
             if not codes:
@@ -650,7 +595,6 @@ elif page == "Transaction":
                 st.stop()
             ok = 0
             for i, code in enumerate(codes):
-                # Match code with serial by index
                 sn = serials[i] if i < len(serials) else ""
                 payload = {
                     "product_id": pid,
@@ -674,10 +618,8 @@ elif page == "Transaction":
                 load_data.clear()
                 st.rerun()
         else:
-            # ISSUE or RETURN processing
             ic = item_code.strip()
             sn = serial.strip()
-            # Validation: ensure Item Code / Serial existed as UPLOAD before issuing/returning
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
                 if ic not in uploads["item_code"].values:
@@ -689,7 +631,6 @@ elif page == "Transaction":
                         st.error("Serial '" + sn + "' not found for '" + ic + "'!")
                         st.stop()
             
-            # Additional validation for ISSUE: prevent overselling
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
                 if qty > cs:
@@ -725,15 +666,12 @@ elif page == "Reports":
         st.stop()
 
     df_r = df_t.copy()
-    # Map IDs to names for human readability
     if not df_p.empty:
         pmap = df_p.set_index("id")["product_name"].to_dict()
         df_r["product_name"] = df_r["product_id"].map(pmap).fillna("Unknown")
     
-    # Prep datetime for filtering
     df_r["created_at"] = pd.to_datetime(df_r["created_at"], errors="coerce")
     df_r["_d"] = df_r["created_at"].dt.date
-    # Set default date range to full dataset extent
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
     mx = df_r["_d"].max() if df_r["_d"].notna().any() else NOW.date()
 
@@ -741,7 +679,6 @@ elif page == "Reports":
         '<div class="form-sec" style="margin-bottom:14px">Filter Criteria</div>',
         unsafe_allow_html=True
     )
-    # Filter row
     f1, f2, f3, f4, f5 = st.columns(5)
     with f1:
         df_ = st.date_input("From", value=mn, key="rf")
@@ -754,10 +691,8 @@ elif page == "Reports":
     with f5:
         st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
     
-    # Second filter row for longer list
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
-    # Apply filters sequentially
     df_f = df_r.copy()
     if df_ != mn:
         df_f = df_f[df_f["_d"] >= df_]
@@ -772,7 +707,6 @@ elif page == "Reports":
     if iv_:
         df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
-    # Result Header & Export button
     r1, r2 = st.columns([2, 1])
     with r1:
         st.markdown(
@@ -783,7 +717,6 @@ elif page == "Reports":
     with r2:
         if not df_f.empty:
             df_ex = df_f.copy()
-            # Clean up for CSV export (format dates, handle comma-serials)
             df_ex["created_at"] = df_ex["created_at"].apply(ind_dt)
             df_ex = explode_serials(df_ex)
             ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
@@ -796,16 +729,12 @@ elif page == "Reports":
                 key="dr"
             )
 
-    # Display results table
     if not df_f.empty:
         df_s = df_f.copy()
-        # Clean up datetime for display
         df_s["created_at"] = df_s["created_at"].apply(ind_dt)
-        # Process comma-separated serials into separate rows for better viewing
         df_s = explode_serials(df_s)
         ec = ["created_at", "product_name", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type"]
         ec = [c for c in ec if c in df_s.columns]
-        # Pretty columns for display
         df_s = df_s[ec].rename(columns={
             "created_at": "Date",
             "product_name": "Product",
