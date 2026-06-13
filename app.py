@@ -7,7 +7,6 @@ from datetime import datetime
 # ==========================================
 # SUPABASE CONFIGURATION
 # ==========================================
-# Use environment variables for security. These fallbacks are for local testing only.
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -24,19 +23,118 @@ if not st.session_state["logged_in"]:
     st.markdown("<style>section[data-testid='stSidebar']{display:none}header[data-testid='stHeader']{display:none}</style>", unsafe_allow_html=True)
 
 # ==========================================
-# CUSTOM CSS THEME
+# CUSTOM CSS THEME — DARK SIDEBAR + LIGHT MAIN
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Main app background and font */
-.stApp {
-    background: #0B0F19 !important; /* Dark blue-black background from your screenshot */
-    color: #FFFFFF !important; /* White text for contrast */
-    font-family: 'Inter', system-ui, sans-serif !important;
+/* ==========================================
+   LOGIN PAGE — FULL VERTICAL + HORIZONTAL CENTER
+   ========================================== */
+.login-full-center {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    padding: 40px 20px !important;
+    box-sizing: border-box !important;
+}
+.login-card {
+    background: #FFFFFF !important;
+    border-radius: 20px !important;
+    padding: 48px 40px 40px !important;
+    max-width: 420px !important;
+    width: 100% !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.04) !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+.login-card img {
+    display: block !important;
+    margin: 0 auto 16px auto !important;
+}
+.login-fallback-icon {
+    width: 64px !important;
+    height: 64px !important;
+    background: linear-gradient(135deg, #0B0F19, #1E293B) !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 28px !important;
+    color: #fff !important;
+    margin: 0 auto 16px auto !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+}
+.login-title {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: #0B0F19 !important;
+    letter-spacing: -0.5px !important;
+    margin: 0 0 4px 0 !important;
+}
+.login-subtitle {
+    font-size: 13px !important;
+    color: #64748B !important;
+    font-weight: 500 !important;
+    margin: 0 0 28px 0 !important;
+}
+.login-card label p {
+    color: #334155 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+.login-card div[data-testid="stTextInput"] > div > div > input {
+    background: #F8FAFC !important;
+    border: 2px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    color: #0B0F19 !important;
+    font-size: 14px !important;
+    padding: 10px 14px !important;
+}
+.login-card div[data-testid="stTextInput"] > div > div > input:focus {
+    border-color: #0EA5E9 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12) !important;
+}
+.login-card div[data-testid="stFormSubmitButton"] > button {
+    background: #0B0F19 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    padding: 12px !important;
+    margin-top: 8px !important;
+    width: 100% !important;
+    transition: all 0.2s !important;
+}
+.login-card div[data-testid="stFormSubmitButton"] > button:hover {
+    background: #1E293B !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+.login-card div[data-testid="stException"] {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+    border: 1px solid #FECACA !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
 }
 
-/* Container padding */
+/* ==========================================
+   MAIN APP — LIGHT BACKGROUND
+   ========================================== */
+.stApp {
+    background: #F1F5F9 !important;
+    color: #0F172A !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+}
 .block-container {
     padding: .8rem 2rem !important;
     max-width: 1560px;
@@ -50,209 +148,321 @@ header[data-testid="stHeader"] {
     visibility: hidden !important;
     height: 0 !important;
 }
-#MainMenu {
-    visibility: hidden;
-}
-footer {
-    visibility: hidden;
-}
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
 
-/* Sidebar styling */
+/* ==========================================
+   SIDEBAR — DARK THEME
+   ========================================== */
 section[data-testid="stSidebar"] {
-    background: #0B0F19 !important; /* Dark background */
-    border-right: 1px solid #1E293B !important; /* Dark blue border */
+    background: #0B0F19 !important;
+    border-right: 1px solid #1E293B !important;
 }
 
 /* ==========================================
-   FIXED: CRITICAL 100% PERFECT LOGO CENTERING 
+   SIDEBAR LOGO — PERFECT CENTER
    ========================================== */
 .sb-logo {
-    padding: 20px 8px 14px;
+    padding: 24px 12px 16px !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;     /* Horizontally center contents */
-    justify-content: center !important;    /* Vertically center contents */
-    gap: 4px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
     text-align: center !important;
     width: 100% !important;
 }
-
-/* Overriding Streamlit's internal layout wrapper for the sidebar elements to achieve absolute centering */
-section[data-testid="stSidebar"] div[data-testid="stElementContainer"] {
+/* Force Streamlit sidebar element container to center its child */
+section[data-testid="stSidebar"] > div > div > div > div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"]:first-child > div[data-testid="stElementContainer"] {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
     width: 100% !important;
-    text-align: center !important;
 }
-
 .sb-logo img {
-    border-radius: 8px;
-    max-width: 110px !important; /* Adjust size to fit better */
-    height: auto;
+    border-radius: 10px !important;
+    max-width: 100px !important;
+    height: auto !important;
     display: block !important;
-    margin: 0 auto !important; /* Native block horizontal center alignment */
+    margin: 0 auto !important;
 }
 .sb-logo-name {
-    font-size: 18px;
-    font-weight: 800;
+    font-size: 20px !important;
+    font-weight: 800 !important;
     color: #FFFFFF !important;
-    letter-spacing: -.4px;
+    letter-spacing: -0.5px !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
 }
 .sb-logo-sub {
-    font-size: 10px;
-    color: #38BDF8 !important; /* Bright blue subtext */
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 700;
+    font-size: 10px !important;
+    color: #38BDF8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
 }
 .sb-fallback-icon {
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #0A0F1D, #1E293B);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+    width: 52px !important;
+    height: 52px !important;
+    background: linear-gradient(135deg, #111827, #1E293B) !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 24px !important;
+    color: #FFFFFF !important;
+    margin: 0 auto !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Navigation label (centered, greyed out) */
+/* Sidebar Navigation Label */
 .sb-nav-label {
-    font-size: 10px;
-    color: #94A3B8 !important;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-weight: 700;
-    padding: 14px 20px 8px;
+    font-size: 10px !important;
+    color: #475569 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    font-weight: 700 !important;
+    padding: 16px 20px 8px !important;
     text-align: center !important;
 }
 
 /* ==========================================
-   FIXED: RADIO / NAVIGATION LOOK WITH BORDER
+   SIDEBAR RADIO — DARK NAV WITH WHITE BORDER
    ========================================== */
-section[data-testid="stRadio"] div[role="radiogroup"] > div {
-    padding: 2px 0px !important;
-    border-left: 4px solid transparent !important;
-    transition: none !important;
-}
-
-/* All Radio Options Text - Permanent White always visible */
-section[data-testid="stRadio"] label p {
-    color: #FFFFFF !important; 
-    font-size: 14px !important;
-    font-weight: 600 !important;
-}
-
-/* Remove Hover backgrounds completely to maintain steady state */
-section[data-testid="stRadio"] div[role="radiogroup"] > div:hover {
+section[data-testid="stSidebar"] section[data-testid="stRadio"] {
     background: transparent !important;
 }
-
-/* Selected / Active State — Left White Border line stays on */
-section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] {
-    background: #111827 !important; /* Subtle dark emphasis on selected block */
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] {
+    gap: 2px !important;
+}
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div {
+    padding: 10px 20px !important;
+    border-left: 4px solid transparent !important;
+    border-radius: 0 !important;
+    transition: none !important;
+    margin: 0 !important;
+}
+/* Radio text — always white, always visible */
+section[data-testid="stSidebar"] section[data-testid="stRadio"] label p {
+    color: #94A3B8 !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+/* Remove hover background */
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover {
+    background: transparent !important;
+}
+/* Active / selected state */
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] {
+    background: #111827 !important;
     border-left: 4px solid #FFFFFF !important;
 }
-section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p {
+section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p {
+    color: #FFFFFF !important;
     font-weight: 700 !important;
 }
 
-/* Dashboard Stat boxes */
+/* ==========================================
+   MAIN CONTENT — LIGHT THEME ELEMENTS
+   ========================================== */
+
+/* Stat Boxes */
 .stat-box {
-    background: #FFFFFF;
-    border: 2px solid #0A0F1D;
-    border-radius: 10px;
-    padding: 16px 18px;
-    min-height: 90px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
-    color: #0A0F1D !important; /* Dark text for cards on light background */
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 14px !important;
+    padding: 20px 22px !important;
+    min-height: 100px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+    color: #0F172A !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+}
+.stat-box:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
 }
 .stat-lbl {
-    font-size: 10px;
-    color: #475569 !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 11px !important;
+    color: #64748B !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 .stat-val {
-    font-size: 26px;
-    font-weight: 800;
-    margin-top: 4px;
-    line-height: 1;
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    margin-top: 6px !important;
+    line-height: 1 !important;
+    color: #0B0F19 !important;
 }
 
-/* Product Cards */
+/* Product Cards — Light */
 .p-card {
-    background: #FFFFFF;
-    border: 1px solid #CBD5E1;
-    border-radius: 8px;
-    padding: 10px 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 72px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
-    transition: all .15s;
-    color: #0A0F1D !important; /* Dark text for cards on light background */
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 82px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.18s !important;
+    color: #0F172A !important;
 }
 .p-card:hover {
-    border-color: #2563EB;
-    background: #F8FAFF;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, .1);
+    border-color: #0EA5E9 !important;
+    background: #F0F9FF !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(14, 165, 233, 0.1) !important;
 }
-.p-top { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+.p-top { display: flex; align-items: center; gap: 6px; overflow: hidden; }
 .p-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
-.p-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.p-stock { font-size: 20px; font-weight: 800; color: #16A34A !important; line-height: 1; text-align: right; }
-.p-total { font-size: 10px; color: #475569 !important; font-weight: 600; }
-.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.dot-g { background: #16A34A; } .dot-y { background: #D97706; } .dot-r { background: #DC2626; }
-.sec-h { font-size: 14px; font-weight: 800; color: #FFFFFF !important; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #FFFFFF; }
+.p-name { font-size: 13px; font-weight: 700; color: #0F172A !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-stock { font-size: 22px; font-weight: 800; color: #059669 !important; line-height: 1; text-align: right; }
+.p-total { font-size: 10px; color: #64748B !important; font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-g { background: #059669; box-shadow: 0 0 6px rgba(5,150,105,0.3); }
+.dot-y { background: #D97706; box-shadow: 0 0 6px rgba(217,119,6,0.3); }
+.dot-r { background: #DC2626; box-shadow: 0 0 6px rgba(220,38,38,0.3); }
 
-/* Button & input styling to work against dark background */
+/* Section Headers — Dark text on light */
+.sec-h {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0B0F19 !important;
+    margin: 22px 0 12px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 2px solid #0B0F19 !important;
+}
+
+/* Form labels — Dark text */
+label p, .stDateInput>label, .stTextArea>label, .stSelectbox>label, .stNumberInput>label {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+}
+.form-sec {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #0B0F19 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 2px solid #0EA5E9 !important;
+    display: inline-block !important;
+}
+.hint {
+    font-size: 11px !important;
+    color: #94A3B8 !important;
+    margin-top: -2px !important;
+    margin-bottom: 10px !important;
+}
+
+/* Input fields — Light */
+.stTextInput>div>div>input,
+.stSelectbox>div>div>select,
+.stTextArea>div>div>textarea,
+.stNumberInput>div>div>input,
+.stDateInput>div>div>input {
+    background: #FFFFFF !important;
+    border: 2px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    color: #0F172A !important;
+    font-size: 14px !important;
+}
+.stTextInput>div>div>input:focus,
+.stSelectbox>div>div>select:focus,
+.stTextArea>div>div>textarea:focus,
+.stNumberInput>div>div>input:focus {
+    border-color: #0EA5E9 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+}
+
+/* Buttons */
+.stButton>button[kind="primary"] {
+    background: #0B0F19 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    padding: 12px 24px !important;
+    transition: all 0.2s !important;
+}
+.stButton>button[kind="primary"]:hover {
+    background: #1E293B !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
 .stDownloadButton>button {
     background: #0EA5E9 !important;
     color: #FFFFFF !important;
     border: none !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     font-weight: 700 !important;
     font-size: 13px !important;
-    padding: 10px 16px !important;
-    width: 100%;
-    box-shadow: 0 2px 8px rgba(14, 165, 233, .25) !important;
+    padding: 10px 18px !important;
+    width: 100% !important;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2) !important;
+    transition: all 0.2s !important;
 }
-.stButton>button[kind="primary"] {
-    background: #FFFFFF !important;
-    color: #0B0F19 !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    font-size: 14px !important;
+.stDownloadButton>button:hover {
+    background: #0284C7 !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3) !important;
 }
-.stTextInput>div>div>input, .stSelectbox>div>div>select, .stTextArea>div>div>textarea, .stNumberInput>div>div>input {
-    background: #FFFFFF !important;
-    border: 2px solid #FFFFFF !important;
-    border-radius: 6px !important;
-    color: #0A0F1D !important;
-}
-label p, .stDateInput>label, .stTextArea>label { font-size: 12px !important; font-weight: 700 !important; color: #FFFFFF !important; }
-.hint { font-size: 11px; color: #94A3B8 !important; margin-top: -2px; margin-bottom: 8px; }
-.form-sec { font-size: 11px; font-weight: 700; color: #38BDF8 !important; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; }
 
-.stError { background-color: rgba(220, 38, 38, 0.15) !important; color: #EF4444 !important; border: 1px solid #DC2626 !important; }
-.stWarning { background-color: rgba(217, 119, 6, 0.15) !important; color: #FBBF24 !important; border: 1px solid #D97706 !important; }
-.stSuccess { background-color: rgba(22, 163, 74, 0.15) !important; color: #4ADE80 !important; border: 1px solid #16A34A !important; }
-.stInfo { background-color: rgba(14, 165, 233, 0.15) !important; color: #38BDF8 !important; border: 1px solid #0EA5E9 !important; }
+/* Dataframe on light background */
+.stDataFrame {
+    background: #FFFFFF !important;
+    border-radius: 12px !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+/* Alert styling — adapted for light bg */
+.stError {
+    background-color: #FEF2F2 !important;
+    color: #DC2626 !important;
+    border: 1px solid #FECACA !important;
+    border-radius: 10px !important;
+}
+.stWarning {
+    background-color: #FFFBEB !important;
+    color: #B45309 !important;
+    border: 1px solid #FDE68A !important;
+    border-radius: 10px !important;
+}
+.stSuccess {
+    background-color: #F0FDF4 !important;
+    color: #059669 !important;
+    border: 1px solid #BBF7D0 !important;
+    border-radius: 10px !important;
+}
+.stInfo {
+    background-color: #F0F9FF !important;
+    color: #0369A1 !important;
+    border: 1px solid #BAE6FD !important;
+    border-radius: 10px !important;
+}
+
+/* Multiselect on light bg */
+.stMultiSelect>div>div {
+    background: #FFFFFF !important;
+    border: 2px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    color: #0F172A !important;
+}
+.stMultiSelect>div>div>div {
+    color: #0F172A !important;
+}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -331,45 +541,45 @@ def explode_serials(df):
     return pd.DataFrame(rows)
 
 # ==========================================
-# AUTHENTICATION HANDLING
+# AUTHENTICATION — CENTERED LOGIN CARD
 # ==========================================
 if not st.session_state["logged_in"]:
-    _, mid, _ = st.columns([1.3, 1.4, 1.3])
-    with mid:
-        st.markdown('<div class="login-logo-wrap">', unsafe_allow_html=True)
-        if os.path.exists("assets/logo.png"):
-            st.image("assets/logo.png", width=140)
-        else:
-            st.markdown('<div class="login-icon">📦</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="login-header">'
-            '<div style="font-size:28px;font-weight:800;letter-spacing:-.5px">AssetFlow KCCL</div>'
-            '<div style="font-size:14px;color:#94A3B8;margin-top:4px">Inventory Control Portal</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        with st.form("lf", clear_on_submit=False):
-            u = st.text_input("Username", placeholder="Enter username", label_visibility="collapsed")
-            p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="collapsed")
-            if st.form_submit_button("Authenticate Sign In", use_container_width=True, type="primary"):
-                if u == "admin" and p == "kccl@2026":
-                    st.session_state["logged_in"] = True
-                    st.rerun()
-                else:
-                    st.error("Invalid credentials!")
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-full-center">', unsafe_allow_html=True)
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+
+    # Logo — centered inside the card
+    if os.path.exists("assets/logo.png"):
+        st.image("assets/logo.png", width=120)
+    else:
+        st.markdown('<div class="login-fallback-icon">📦</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="login-title">AssetFlow KCCL</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-subtitle">Inventory Control Portal</div>', unsafe_allow_html=True)
+
+    with st.form("lf", clear_on_submit=False):
+        u = st.text_input("Username", placeholder="Enter username", label_visibility="visible")
+        p = st.text_input("Password", type="password", placeholder="Enter password", label_visibility="visible")
+        submitted = st.form_submit_button("Authenticate Sign In", use_container_width=True, type="primary")
+        if submitted:
+            if u == "admin" and p == "kccl@2026":
+                st.session_state["logged_in"] = True
+                st.rerun()
+            else:
+                st.error("Invalid credentials. Please try again.")
+
+    st.markdown('</div>', unsafe_allow_html=True)  # close login-card
+    st.markdown('</div>', unsafe_allow_html=True)  # close login-full-center
     st.stop()
 
 # ==========================================
-# SIDEBAR NAVIGATION & LOGO
+# SIDEBAR — DARK THEME NAV
 # ==========================================
 st.sidebar.markdown('<div class="sb-logo">', unsafe_allow_html=True)
 if os.path.exists("assets/logo.png"):
     try:
-        st.sidebar.image("assets/logo.png", width=110)
+        st.sidebar.image("assets/logo.png", width=100)
     except Exception:
-        pass
+        st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
 else:
     st.sidebar.markdown('<div class="sb-fallback-icon">📦</div>', unsafe_allow_html=True)
 st.sidebar.markdown(
@@ -398,7 +608,6 @@ if page == "Dashboard":
         st.info("No master entries. Populate tpl_inv_products in backend.")
         st.stop()
 
-    # Stat calculations
     ts = 0.0
     for _, row in df_p.iterrows():
         ts += get_stock(df_t, row["id"])
@@ -413,7 +622,6 @@ if page == "Dashboard":
         im = safe_num(m[mk & (m["action_type"].eq("ISSUE"))]["quantity"].sum())
         rm = safe_num(m[mk & (m["action_type"].eq("RETURN"))]["quantity"].sum())
 
-    # Stat Row
     s1, s2, s3, s4 = st.columns(4)
     with s1:
         st.markdown(
@@ -440,7 +648,6 @@ if page == "Dashboard":
             unsafe_allow_html=True
         )
 
-    # Product cards section
     st.markdown('<div class="sec-h">Live Inventory Distribution</div>', unsafe_allow_html=True)
     cards = st.columns(5)
     sum_rows = []
@@ -485,7 +692,7 @@ if page == "Dashboard":
     d1, d2, d3 = st.columns(3)
 
     with d1:
-        st.markdown('<p style="font-size:12px;font-weight:700;margin-bottom:6px">Full Ledger Audit Log</p>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px">Full Ledger Audit Log</p>', unsafe_allow_html=True)
         if not df_t.empty:
             df_d = df_t.copy()
             df_d["product_name"] = df_d["product_id"].map(p_name_map).fillna("Unknown")
@@ -502,7 +709,7 @@ if page == "Dashboard":
             )
 
     with d2:
-        st.markdown('<p style="font-size:12px;font-weight:700;margin-bottom:6px">System Balance Summary</p>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px">System Balance Summary</p>', unsafe_allow_html=True)
         if not df_sum.empty:
             st.download_button(
                 "Download Summary CSV",
@@ -513,7 +720,7 @@ if page == "Dashboard":
             )
 
     with d3:
-        st.markdown('<p style="font-size:12px;font-weight:700;margin-bottom:6px">Targeted Asset Extraction</p>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px">Targeted Asset Extraction</p>', unsafe_allow_html=True)
         sel = st.selectbox("Select Product", df_p["product_name"].tolist(), key="cs", label_visibility="collapsed")
         if sel:
             tid = df_p[df_p["product_name"].eq(sel)]["id"].values[0]
@@ -534,7 +741,7 @@ if page == "Dashboard":
                 )
             else:
                 st.markdown(
-                    '<p style="font-size:11px;color:#EF4444;margin-top:4px;font-weight:600">No issue records.</p>',
+                    '<p style="font-size:11px;color:#DC2626;margin-top:4px;font-weight:600">No issue records found.</p>',
                     unsafe_allow_html=True
                 )
 
@@ -613,8 +820,20 @@ elif page == "Transaction":
                         ok += 1
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
+
+            # *** AUTO-UPDATE total_added_to_system ON UPLOAD ***
             if ok > 0:
-                st.success("Uploaded " + str(ok) + " item(s) successfully!")
+                try:
+                    # Fetch current total
+                    curr_res = supabase.table("tpl_inv_products").select("total_added_to_system").eq("id", pid).execute()
+                    curr_val = safe_num(curr_res.data[0]["total_added_to_system"]) if curr_res.data else 0.0
+                    new_val = curr_val + (qty * ok)  # qty per item × number of items uploaded
+                    # Update the product's total_added_to_system
+                    supabase.table("tpl_inv_products").update({"total_added_to_system": new_val}).eq("id", pid).execute()
+                except Exception as ex:
+                    st.warning("Transaction saved but total counter update failed: " + str(ex))
+
+                st.success("Uploaded " + str(ok) + " item(s) successfully! Total counter updated.")
                 load_data.clear()
                 st.rerun()
         else:
@@ -630,7 +849,7 @@ elif page == "Transaction":
                     if match.empty:
                         st.error("Serial '" + sn + "' not found for '" + ic + "'!")
                         st.stop()
-            
+
             if action == "ISSUE":
                 cs = get_stock(df_t, pid)
                 if qty > cs:
@@ -669,7 +888,7 @@ elif page == "Reports":
     if not df_p.empty:
         pmap = df_p.set_index("id")["product_name"].to_dict()
         df_r["product_name"] = df_r["product_id"].map(pmap).fillna("Unknown")
-    
+
     df_r["created_at"] = pd.to_datetime(df_r["created_at"], errors="coerce")
     df_r["_d"] = df_r["created_at"].dt.date
     mn = df_r["_d"].min() if df_r["_d"].notna().any() else NOW.date()
@@ -690,7 +909,7 @@ elif page == "Reports":
         im_ = st.multiselect("Item", sorted(df_p["product_name"].tolist()), key="rm")
     with f5:
         st_ = st.multiselect("Type", ["ISSUE", "RETURN", "UPLOAD"], key="rs")
-    
+
     iv_ = st.multiselect("Invoice No", sorted(df_r["invoice_no"].dropna().unique()), key="rv")
 
     df_f = df_r.copy()
@@ -710,8 +929,8 @@ elif page == "Reports":
     r1, r2 = st.columns([2, 1])
     with r1:
         st.markdown(
-            '<p style="font-size:13px;margin-top:10px;font-weight:700">'
-            'Showing <span style="color:#38BDF8">' + str(len(df_f)) + '</span> records</p>',
+            '<p style="font-size:13px;margin-top:10px;font-weight:700;color:#334155">'
+            'Showing <span style="color:#0EA5E9;font-weight:800">' + str(len(df_f)) + '</span> records</p>',
             unsafe_allow_html=True
         )
     with r2:
