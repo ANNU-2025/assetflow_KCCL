@@ -12,10 +12,9 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — QUERY PARAM BASED (100% REFRESH PROOF)
+# PERSISTENT AUTH — QUERY PARAM BASED
 # ==========================================
 if "logged_in" not in st.session_state:
-    # পেজ রিফ্রেশ হলে ইউআরএল-এর auth প্যারামিটার চেক করবে
     st.session_state["logged_in"] = st.query_params.get("auth") == "1"
 
 def _set_auth(val):
@@ -521,5 +520,3 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
-
-```
