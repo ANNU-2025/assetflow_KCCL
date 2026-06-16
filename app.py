@@ -12,7 +12,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — ABSOLUTE URL LOCK
+# PERSISTENT AUTH — FIXED ABSOLUTE LOCK
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = st.query_params.get("auth") == "1"
@@ -68,7 +68,9 @@ if not st.session_state["logged_in"]:
                 if u == "admin" and p == "kccl@2026":
                     st.query_params["auth"] = "1"
                     st.session_state["logged_in"] = True
-                    st.rerun()
+                    # ব্রাউজারের ইউআরএল-এ auth=1 লক করার জন্য স্ক্রিপ্ট রিলোভ
+                    st.components.v1.html("<script>window.location.replace(window.location.href.split('?')[0] + '?auth=1');</script>", height=0)
+                    st.stop()
                 else:
                     st.error("Invalid credentials. Please try again.")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -123,7 +125,8 @@ with st.sidebar:
     st.markdown('<div class="sb-logout-box">', unsafe_allow_html=True)
     if st.button("Logout Session", key="sb_logout_btn", use_container_width=True):
         _set_auth(False)
-        st.rerun()
+        st.components.v1.html("<script>window.location.replace(window.location.href.split('?')[0]);</script>", height=0)
+        st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
