@@ -68,7 +68,6 @@ if not st.session_state["logged_in"]:
                 if u == "admin" and p == "kccl@2026":
                     st.query_params["auth"] = "1"
                     st.session_state["logged_in"] = True
-                    # ব্রাউজারের ইউআরএল-এ auth=1 লক করার জন্য স্ক্রিপ্ট রিলোভ
                     st.components.v1.html("<script>window.location.replace(window.location.href.split('?')[0] + '?auth=1');</script>", height=0)
                     st.stop()
                 else:
@@ -94,9 +93,10 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] label p{color:#F
 section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div:hover{background:transparent!important}
 section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"]{background:#111827!important;border-left:4px solid #FFFFFF!important}
 section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiogroup"] > div[aria-checked="true"] label p{font-weight:700!important}
-.sb-logout-box{margin-top:auto!important;padding:20px!important;border-top:1px solid #1E293B!important;background:#0B0F19!important}
+.sb-logout-box{margin-top:auto!important;padding:20px 20px 5px 20px!important;border-top:1px solid #1E293B!important;background:#0B0F19!important}
 .sb-logout-box button{background:transparent!important;color:#FFFFFF!important;border:1px solid #DC2626!important;border-radius:8px!important;padding:8px!important;font-weight:600!important;font-size:13px!important}
 .sb-logout-box button:hover{background:#DC2626!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(220,38,38,0.2)!important}
+.sb-watermark{text-align:center!important;color:#64748B!important;font-size:11px!important;padding:5px 0 15px 0!important;font-family:'Inter',sans-serif!important}
 .p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
@@ -116,7 +116,7 @@ label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>l
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR
+# SIDEBAR (LEFT PANEL WITH WATERMARK)
 # ==========================================
 st.sidebar.markdown('<div class="sb-header-title">KCCL Bangla</div>', unsafe_allow_html=True)
 st.sidebar.markdown('<div class="sb-nav-label">Navigation</div>', unsafe_allow_html=True)
@@ -128,6 +128,8 @@ with st.sidebar:
         st.components.v1.html("<script>window.location.replace(window.location.href.split('?')[0]);</script>", height=0)
         st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
+    # ওয়াটারমার্কটি বাম প্যানেলের একদম নিচে প্লেস করা হলো
+    st.markdown('<div class="sb-watermark">Created by Anurag</div>', unsafe_allow_html=True)
 
 # ==========================================
 # CONFIG & DATA
@@ -524,10 +526,3 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
-
-# ==========================================
-# FOOTER WATERMARK
-# ==========================================
-st.markdown("""<style>
-.footer-watermark{position:fixed;left:0;bottom:0;width:100%;background:transparent;color:#94A3B8;text-align:center;font-size:11px;padding:10px 0;z-index:99}
-</style><div class="footer-watermark">Created by Anurag</div>""", unsafe_allow_html=True)
