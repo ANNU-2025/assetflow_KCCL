@@ -12,7 +12,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — QUERY PARAM BASED
+# PERSISTENT AUTH — FIXED REFRESH PROOF
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = st.query_params.get("auth") == "1"
@@ -202,7 +202,7 @@ def explode_serials(df):
                     nr["serial_number"] = p
                     rows.append(nr)
                 continue
-    rows.append(r)
+        rows.append(r)
     return pd.DataFrame(rows)
 
 # ==========================================
