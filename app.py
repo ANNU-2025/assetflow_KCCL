@@ -524,3 +524,10 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
+
+# ==========================================
+# FOOTER WATERMARK
+# ==========================================
+st.markdown("""<style>
+.footer-watermark{position:fixed;left:0;bottom:0;width:100%;background:transparent;color:#94A3B8;text-align:center;font-size:11px;padding:10px 0;z-index:99}
+</style><div class="footer-watermark">Created by Anurag</div>""", unsafe_allow_html=True)
