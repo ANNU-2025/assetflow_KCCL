@@ -12,7 +12,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
-# PERSISTENT AUTH — FIXED REFRESH PROOF
+# PERSISTENT AUTH — ABSOLUTE URL LOCK
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = st.query_params.get("auth") == "1"
@@ -66,7 +66,8 @@ if not st.session_state["logged_in"]:
             p = st.text_input("Password", type="password", placeholder="Enter password")
             if st.form_submit_button("Sign In", use_container_width=True):
                 if u == "admin" and p == "kccl@2026":
-                    _set_auth(True)
+                    st.query_params["auth"] = "1"
+                    st.session_state["logged_in"] = True
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
