@@ -406,14 +406,26 @@ elif page == "Transaction":
                     st.stop()
                 
                 # Serial execution branch validation if provided
+                # Serial execution branch validation if provided
                 if sn_clean:
                     match = uploads[(uploads["item_code"].eq(ic_clean)) & (uploads["serial_number"].eq(sn_clean))]
                     if match.empty:
                         st.error("Serial '" + sn_clean + "' not found in uploads for '" + ic_clean + "'!")
                         st.stop()
-                    net = get_serial_net_issue(df_t, ic_clean, sn_clean)
-                    if net > 0:
-                        st.error("Serial '" + sn_clean + "' is already issued out! Return it first before re-issuing.")
+                    
+                    # QUANTUM QUANTITY CHECK FOR THIS SPECIFIC SERIAL
+                    # একই সিরিয়ালে ভেঙে ভেঙে ইস্যু করার জন্য নেট কোয়ান্টিটি ব্যালেন্স চেক করা হচ্ছে
+                    sn_uploaded_qty = pd.to_numeric(match["quantity"], errors="coerce").fillna(0).sum()
+                    
+                    # এই সিরিয়ালটি আগে কতবার এবং কত কোয়ান্টিটি ইস্যু/রিটার্ন হয়েছে তার হিসাব
+                    m_history = df_t[df_t["item_code"].eq(ic_clean) & df_t["serial_number"].eq(sn_clean)]
+                    sn_issued_qty = pd.to_numeric(m_history[m_history["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+                    sn_returned_qty = pd.to_numeric(m_history[m_history["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+                    
+                    sn_available_balance = (sn_uploaded_qty + sn_returned_qty) - sn_issued_qty
+                    
+                    if qty > sn_available_balance:
+                        st.error(f"Insufficient stock for Serial '{sn_clean}'! Available Balance: {sn_available_balance:.3f} {unit}")
                         st.stop()
 
             # 1. QUANTUM SYSTEM RECTIFICATION FOR ITEM CODE BALANCE STOCK
