@@ -1,3 +1,14 @@
+আপনার অ্যাপ্লিকেশনের লজিক্যাল বাগটি ফিক্স করা হয়েছে এবং রিকোয়ারমেন্ট অনুযায়ী সিরিয়াল নাম্বারের বাধ্যবাধকতা শিথিল করে প্রফেশনাল নোটিফিকেশন সিস্টেম অ্যাড করা হয়েছে।
+
+### 🛠️ যে পরিবর্তনগুলো করা হয়েছে:
+
+১. **একই Item Code থেকে বারবার Issue করার লজিক ফিক্স:** আগে লজিকটি এমন ছিল যে কোনো নির্দিষ্ট `serial_number` বা `item_code` একবার `ISSUE` অ্যাকশনে এন্ট্রি হয়ে গেলেই সিস্টেম ধরে নিত সেটি স্টক আউট। এখন কন্ডিশনটি পরিবর্তন করে **Net Issue Calculation** মেকানিজম অ্যাড করা হয়েছে। অর্থাৎ, একটি Item Code-এ মোট কত কোয়ান্টিটি আপলোড হয়েছিল এবং তার বিপরীতে ধাপে ধাপে কত কোয়ান্টিটি ইস্যু বা রিটার্ন হয়েছে, তার গাণিতিক হিসাব ট্র্যাক থাকবে। ফলে একই কোড থেকে ভেঙে ভেঙে (যেমন ৬টির মধ্যে ২ টি, তারপর আবার ৪ টি) ইস্যু করতে কোনো বাধা থাকবে না।
+২. **Serial Number ঐচ্ছিক (Optional):** সিরিয়াল নাম্বার এখন আর বাধ্যতামূলক নয়। ফিল্ড খালি রেখে ট্রানজেকশন সাবমিট করলে কোনো এরর দেবে না, সুন্দরভাবে ট্র্যাক রাখবে। তবে সিরিয়াল নাম্বার দিলে সেটি আগের মতোই ডেটাবেজে স্টোর হবে।
+৩. **প্রফেশনাল নোটিফিকেশন সিস্টেম:** ট্রানজেকশন সফল হলে স্ক্রিনের ওপরে রিফ্রেশ হওয়ার আগে `st.toast()` এবং `st.success()` দিয়ে একটি স্মুথ নোটিফিকেশন আসবে। একইভাবে এরর মেসেজগুলোও আরও ক্লিন ভাবে ডিসপ্লে হবে।
+
+নিচে আপনার দেওয়া কোডের অবিকল স্ট্রাকচার ও সিএসএস বজায় রেখে সম্পূর্ণ সংশোধিত কোডটি দেওয়া হলো:
+
+```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
@@ -128,7 +139,6 @@ with st.sidebar:
         st.components.v1.html("<script>window.location.replace(window.location.href.split('?')[0]);</script>", height=0)
         st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
-    # ওয়াটারমার্কটি বাম প্যানেলের একদম নিচে প্লেস করা হলো
     st.markdown('<div class="sb-watermark">Created by Anurag</div>', unsafe_allow_html=True)
 
 # ==========================================
@@ -161,13 +171,26 @@ def get_stock(dt, pid):
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
     return float((up + rt) - is_)
 
+# 1. FIXED CORE LOGIC: TRACK BALANCE STOCK BY QUANTITY QUANTUM FOR BREAKING TRANSACTION BATCHES
+def get_item_code_net_stock(dt, item_code):
+    if dt.empty or not item_code:
+        return 0.0
+    m = dt[dt["item_code"].eq(item_code)]
+    up = pd.to_numeric(m[m["action_type"].eq("UPLOAD")]["quantity"], errors="coerce").fillna(0).sum()
+    rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+    is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+    return float((up + rt) - is_)
+
 def get_serial_net_issue(dt, item_code, serial):
-    if dt.empty or not serial or not item_code:
+    if dt.empty or not item_code:
         return 0
-    m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
-    issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
-    returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
-    return float(issues - returns)
+    # If explicit serial trace is given
+    if serial:
+        m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
+        issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+        returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+        return float(issues - returns)
+    return 0
 
 def dot_cls(s, t):
     if t <= 0:
@@ -314,7 +337,8 @@ elif page == "Transaction":
         st.markdown('<div class="form-sec">Asset Parameters</div>', unsafe_allow_html=True)
         sel_prod = st.selectbox("Product *", df_p["product_name"].tolist(), key="tp")
         item_code = st.text_input("Item Code *", placeholder="Comma-separated for bulk: IC-001, IC-002", key="tc")
-        serial = st.text_area("Serial Number(s) *", placeholder="Comma-separated: SN-001, SN-002, SN-003", height=60, key="ts")
+        # 2. MANDATORY REMOVED: Serial validation is decoupled from structural constraint
+        serial = st.text_area("Serial Number(s)", placeholder="Optional. Comma-separated if specifying: SN-001, SN-002", height=60, key="ts")
         st.markdown('<div class="hint">UPLOAD: comma-separated serials = each gets its own row.<br>Quantity is auto-divided equally among serials.</div>', unsafe_allow_html=True)
         unit = st.selectbox("Unit *", UNITS, key="tu")
         qty = st.number_input("Total Quantity *", min_value=0.001, step=0.001, format="%.3f", key="tq")
@@ -333,8 +357,6 @@ elif page == "Transaction":
         errs = []
         if not item_code.strip():
             errs.append("Item Code is required.")
-        if not serial.strip():
-            errs.append("Serial Number is required.")
         if qty <= 0:
             errs.append("Quantity must be greater than zero.")
         if action != "UPLOAD" and not issued_to.strip():
@@ -347,15 +369,18 @@ elif page == "Transaction":
             st.stop()
 
         pid = int(df_p[df_p["product_name"].eq(sel_prod)]["id"].values[0])
+        ic_clean = item_code.strip()
+        sn_clean = serial.strip()
 
         if action == "UPLOAD":
             codes = [c.strip() for c in item_code.split(",") if c.strip()]
-            serials = [s.strip() for s in serial.split(",") if s.strip()]
+            serials = [s.strip() for s in serial.split(",") if s.strip()] if sn_clean else []
+            
             if not codes:
                 st.error("No valid Item Code provided.")
                 st.stop()
 
-            num_entries = max(len(codes), len(serials))
+            num_entries = max(len(codes), len(serials)) if serials else len(codes)
             per_qty = round(qty / num_entries, 3)
             distributed = per_qty * (num_entries - 1)
             last_qty = round(qty - distributed, 3)
@@ -378,36 +403,43 @@ elif page == "Transaction":
                 except Exception as ex:
                     st.error("Failed for " + code + ": " + str(ex))
             if ok > 0:
+                # 3. NOTIFICATION ADDED
+                st.toast("🎉 Batch Upload Committed Successfully!", icon="📥")
                 st.success("Uploaded " + str(ok) + " item(s) — " + "{:.3f}".format(per_qty) + " " + unit + " each (total " + "{:.3f}".format(qty) + ")")
                 load_data.clear()
                 st.rerun()
 
         elif action == "ISSUE":
-            ic = item_code.strip()
-            sn = serial.strip()
-
             if not df_t.empty:
                 uploads = df_t[df_t["action_type"].eq("UPLOAD")]
-                if ic not in uploads["item_code"].values:
-                    st.error("Item Code '" + ic + "' not found in uploads!")
+                if ic_clean not in uploads["item_code"].values:
+                    st.error("Item Code '" + ic_clean + "' not found in uploads!")
                     st.stop()
-                if sn:
-                    match = uploads[(uploads["item_code"].eq(ic)) & (uploads["serial_number"].eq(sn))]
+                
+                # Serial execution branch validation if provided
+                if sn_clean:
+                    match = uploads[(uploads["item_code"].eq(ic_clean)) & (uploads["serial_number"].eq(sn_clean))]
                     if match.empty:
-                        st.error("Serial '" + sn + "' not found in uploads for '" + ic + "'!")
+                        st.error("Serial '" + sn_clean + "' not found in uploads for '" + ic_clean + "'!")
                         st.stop()
-                    net = get_serial_net_issue(df_t, ic, sn)
+                    net = get_serial_net_issue(df_t, ic_clean, sn_clean)
                     if net > 0:
-                        st.error("Serial '" + sn + "' is already issued out! Return it first before re-issuing.")
+                        st.error("Serial '" + sn_clean + "' is already issued out! Return it first before re-issuing.")
                         st.stop()
+
+            # 1. QUANTUM SYSTEM RECTIFICATION FOR ITEM CODE BALANCE STOCK
+            ic_available = get_item_code_net_stock(df_t, ic_clean)
+            if qty > ic_available:
+                st.error("Insufficient balance for Item Code '" + ic_clean + "'! Available Balance: " + "{:.3f}".format(ic_available) + " " + unit)
+                st.stop()
 
             cs = get_stock(df_t, pid)
             if qty > cs:
-                st.error("Insufficient stock! Available: " + "{:.3f}".format(cs) + " " + unit)
+                st.error("Insufficient global product stock! Available: " + "{:.3f}".format(cs) + " " + unit)
                 st.stop()
 
             payload = {
-                "product_id": pid, "item_code": ic, "serial_number": sn,
+                "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "ISSUE",
                 "created_at": datetime.now().isoformat()
@@ -415,7 +447,9 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.success("Issued: " + "{:.3f}".format(qty) + " " + unit + " — " + ic + " / " + sn)
+                    # 3. NOTIFICATION ADDED
+                    st.toast("🚀 Asset Issued Successfully!", icon="📤")
+                    st.success("Issued: " + "{:.3f}".format(qty) + " " + unit + " — " + ic_clean + (f" / {sn_clean}" if sn_clean else ""))
                     load_data.clear()
                     st.rerun()
                 else:
@@ -424,22 +458,19 @@ elif page == "Transaction":
                 st.error("DB Error: " + str(ex))
 
         elif action == "RETURN":
-            ic = item_code.strip()
-            sn = serial.strip()
-
             if not df_t.empty:
                 all_codes = df_t["item_code"].values
-                if ic not in all_codes:
-                    st.error("Item Code '" + ic + "' not found in any transaction!")
+                if ic_clean not in all_codes:
+                    st.error("Item Code '" + ic_clean + "' not found in any transaction!")
                     st.stop()
-                if sn:
-                    net = get_serial_net_issue(df_t, ic, sn)
+                if sn_clean:
+                    net = get_serial_net_issue(df_t, ic_clean, sn_clean)
                     if net <= 0:
-                        st.error("Serial '" + sn + "' has NOT been issued or already returned! Cannot return.")
+                        st.error("Serial '" + sn_clean + "' has NOT been issued or already returned! Cannot return.")
                         st.stop()
 
             payload = {
-                "product_id": pid, "item_code": ic, "serial_number": sn,
+                "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "RETURN",
                 "created_at": datetime.now().isoformat()
@@ -447,7 +478,9 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.success("Returned: " + "{:.3f}".format(qty) + " " + unit + " — " + ic + " / " + sn)
+                    # 3. NOTIFICATION ADDED
+                    st.toast("✅ Asset Return Logic Logged!", icon="📥")
+                    st.success("Returned: " + "{:.3f}".format(qty) + " " + unit + " — " + ic_clean + (f" / {sn_clean}" if sn_clean else ""))
                     load_data.clear()
                     st.rerun()
                 else:
@@ -526,3 +559,5 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
+
+```
