@@ -548,5 +548,3 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=440)
     else:
         st.warning("No records match this filter.")
-
-```
