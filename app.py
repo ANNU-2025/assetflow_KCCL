@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
 import os
+import base64
 from datetime import datetime
 
 # ==========================================
@@ -113,9 +114,6 @@ label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>l
 .stTextInput>div>div>input,.stSelectbox>div>div>select,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stDateInput>div>div>input{background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;font-size:14px!important}
 .stButton>button[kind="primary"]{background:#0B0F19!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;padding:12px 24px!important}
 .stDownloadButton>button{background:#0EA5E9!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;width:100%!important}
-.card-dl-btn{height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important}
-.card-dl-btn div{height:0!important;margin:0!important;padding:0!important}
-.card-dl-btn button{height:0!important;margin:0!important;padding:0!important;border:none!important;overflow:hidden!important}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -203,6 +201,9 @@ def ind_dt(v):
 def to_csv(df):
     return df.to_csv(index=False).encode("utf-8")
 
+def to_csv_str(df):
+    return df.to_csv(index=False)
+
 def safe_num(v, d=0.0):
     try:
         return float(v)
@@ -269,19 +270,21 @@ if page == "Dashboard":
 
         sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
-        # --- In-stock data dump for this product's card click ---
+        # --- Build in-stock CSV as base64 for inline JS download ---
         df_in_stock = df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))].copy()
-        dl_data = b""
         dl_fname = "AssetFlow_" + nm.lower().replace(" ", "_") + "_InStock_" + DT_STR + ".csv"
         if not df_in_stock.empty:
             df_in_stock["created_at"] = df_in_stock["created_at"].apply(ind_dt)
             df_in_stock["Product"] = nm
             df_in_stock = explode_serials(df_in_stock)
             ec = [c for c in ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "invoice_no"] if c in df_in_stock.columns]
-            dl_data = to_csv(df_in_stock[ec])
+            csv_str = to_csv_str(df_in_stock[ec])
+        else:
+            csv_str = ""
+        b64 = base64.b64encode(csv_str.encode("utf-8")).decode("utf-8")
 
         card_html = (
-            '<div class="p-card" onclick="var b=this.parentElement.querySelector(\'.card-dl-btn button\');if(b)b.click();"><div class="p-top">'
+            '<div class="p-card" onclick="var a=document.createElement(\'a\');a.href=\'data:text/csv;base64,' + b64 + '\';a.download=\'' + dl_fname + '\';a.click();"><div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
             '<div class="p-name">' + nm + '</div></div>'
             '<div class="p-bottom">'
@@ -290,9 +293,6 @@ if page == "Dashboard":
             '</div></div>'
         )
         with cards[idx % 5]:
-            st.markdown('<div class="card-dl-btn">', unsafe_allow_html=True)
-            st.download_button("⬇", data=dl_data, file_name=dl_fname, mime="text/csv", key="cdl_" + str(pid))
-            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(card_html, unsafe_allow_html=True)
         idx += 1
 
