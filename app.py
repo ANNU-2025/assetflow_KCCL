@@ -97,12 +97,17 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
 .sb-logout-box button{background:transparent!important;color:#FFFFFF!important;border:1px solid #DC2626!important;border-radius:8px!important;padding:8px!important;font-weight:600!important;font-size:13px!important}
 .sb-logout-box button:hover{background:#DC2626!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(220,38,38,0.2)!important}
 .sb-watermark{text-align:center!important;color:#64748B!important;font-size:11px!important;padding:5px 0 15px 0!important;font-family:'Inter',sans-serif!important}
-.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important;cursor:pointer!important}
+.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-bottom{display:flex!important;flex-direction:column!important;gap:2px!important;margin-top:6px!important}
-.p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1}
+.p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1;cursor:pointer!important;border-radius:4px;padding:2px 4px;margin:-2px -4px;transition:background .15s ease!important;display:flex!important;align-items:center!important;gap:4px!important}
+.p-stock:hover{background:#ECFDF5!important}
+.p-stock-num{border-bottom:2px dashed #059669;transition:border-color .15s}
+.p-stock:hover .p-stock-num{border-color:#0EA5E9}
+.p-dl-icon{font-size:11px;color:#0EA5E9;margin-left:auto!important;opacity:.5;transition:opacity .15s}
+.p-stock:hover .p-dl-icon{opacity:1}
 .p-total{font-size:11px;color:#64748B!important;font-weight:600}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-g{background:#059669}.dot-y{background:#D97706}.dot-r{background:#DC2626}
@@ -280,11 +285,15 @@ if page == "Dashboard":
             dl_data = to_csv(df_in_stock[ec])
 
         card_html = (
-            '<div class="p-card" onclick="var vb=this.closest(\'[data-testid=stVerticalBlock]\');if(vb){var b=vb.querySelector(\'button\');if(b)b.click();}"><div class="p-top">'
+            '<div class="p-card"><div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
             '<div class="p-name">' + nm + '</div></div>'
             '<div class="p-bottom">'
-            '<div class="p-stock">' + stk_str + ' <span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span></div>'
+            '<div class="p-stock">'
+            '<span class="p-stock-num">' + stk_str + '</span>'
+            ' <span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span>'
+            '<span class="p-dl-icon">⬇</span>'
+            '</div>'
             '<div class="p-total">Added: ' + total_int + ' ' + unit + '</div>'
             '</div></div>'
         )
@@ -292,6 +301,26 @@ if page == "Dashboard":
             st.markdown(card_html, unsafe_allow_html=True)
             st.download_button("⬇", data=dl_data, file_name=dl_fname, mime="text/csv", key="cdl_" + str(pid))
         idx += 1
+
+    # --- JS: bind click on stock number to trigger hidden download button ---
+    st.html("""<script>
+    (function(){
+        function bind(){
+            document.querySelectorAll('.p-stock:not([data-dl])').forEach(function(el){
+                el.setAttribute('data-dl','1');
+                el.addEventListener('click',function(){
+                    var vb=el.closest('[data-testid="stVerticalBlock"]');
+                    if(vb){
+                        var b=vb.querySelector('[data-testid="stDownloadButtonContainer"] button');
+                        if(b){b.click();}
+                    }
+                });
+            });
+        }
+        bind();
+        new MutationObserver(bind).observe(document.body,{childList:true,subtree:true});
+    })();
+    </script>""")
 
     df_sum = pd.DataFrame(sum_rows)
     st.markdown('<div class="sec-h">Data Extraction Hub</div>', unsafe_allow_html=True)
