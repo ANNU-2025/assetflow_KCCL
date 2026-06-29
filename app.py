@@ -97,7 +97,7 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
 .sb-logout-box button{background:transparent!important;color:#FFFFFF!important;border:1px solid #DC2626!important;border-radius:8px!important;padding:8px!important;font-weight:600!important;font-size:13px!important}
 .sb-logout-box button:hover{background:#DC2626!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(220,38,38,0.2)!important}
 .sb-watermark{text-align:center!important;color:#64748B!important;font-size:11px!important;padding:5px 0 15px 0!important;font-family:'Inter',sans-serif!important}
-.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
+.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important;cursor:pointer!important}
 .p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -113,6 +113,9 @@ label p,.stDateInput>label,.stTextArea>label,.stSelectbox>label,.stNumberInput>l
 .stTextInput>div>div>input,.stSelectbox>div>div>select,.stTextArea>div>div>textarea,.stNumberInput>div>div>input,.stDateInput>div>div>input{background:#FFFFFF!important;border:2px solid #E2E8F0!important;border-radius:10px!important;color:#0F172A!important;font-size:14px!important}
 .stButton>button[kind="primary"]{background:#0B0F19!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;padding:12px 24px!important}
 .stDownloadButton>button{background:#0EA5E9!important;color:#FFFFFF!important;border-radius:10px!important;font-weight:700!important;width:100%!important}
+.card-dl-btn{height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;margin:0!important;padding:0!important}
+.card-dl-btn div{height:0!important;margin:0!important;padding:0!important}
+.card-dl-btn button{height:0!important;margin:0!important;padding:0!important;border:none!important;overflow:hidden!important}
 </style>""", unsafe_allow_html=True)
 
 # ==========================================
@@ -266,8 +269,19 @@ if page == "Dashboard":
 
         sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
+        # --- In-stock data dump for this product's card click ---
+        df_in_stock = df_t[(df_t["product_id"].eq(pid)) & (df_t["action_type"].eq("UPLOAD"))].copy()
+        dl_data = b""
+        dl_fname = "AssetFlow_" + nm.lower().replace(" ", "_") + "_InStock_" + DT_STR + ".csv"
+        if not df_in_stock.empty:
+            df_in_stock["created_at"] = df_in_stock["created_at"].apply(ind_dt)
+            df_in_stock["Product"] = nm
+            df_in_stock = explode_serials(df_in_stock)
+            ec = [c for c in ["created_at", "Product", "item_code", "serial_number", "quantity", "unit", "invoice_no"] if c in df_in_stock.columns]
+            dl_data = to_csv(df_in_stock[ec])
+
         card_html = (
-            '<div class="p-card"><div class="p-top">'
+            '<div class="p-card" onclick="var b=this.parentElement.querySelector(\'.card-dl-btn button\');if(b)b.click();"><div class="p-top">'
             '<span class="dot ' + dc + '"></span>'
             '<div class="p-name">' + nm + '</div></div>'
             '<div class="p-bottom">'
@@ -276,6 +290,9 @@ if page == "Dashboard":
             '</div></div>'
         )
         with cards[idx % 5]:
+            st.markdown('<div class="card-dl-btn">', unsafe_allow_html=True)
+            st.download_button("⬇", data=dl_data, file_name=dl_fname, mime="text/csv", key="cdl_" + str(pid))
+            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown(card_html, unsafe_allow_html=True)
         idx += 1
 
@@ -414,10 +431,10 @@ elif page == "Transaction":
                         st.stop()
                     
                     # QUANTUM QUANTITY CHECK FOR THIS SPECIFIC SERIAL
-                    # একই সিরিয়ালে ভেঙে ভেঙে ইস্যু করার জন্য নেট কোয়ান্টিটি ব্যালেন্স চেক করা হচ্ছে
+                    # একই সিরিয়ালে ভেঙে ভেঙে ইস্যু করার জন্য নেট কোয়ান্টিটি ব্যালেন্স চেক করা হচ্ছে
                     sn_uploaded_qty = pd.to_numeric(match["quantity"], errors="coerce").fillna(0).sum()
                     
-                    # এই সিরিয়ালটি আগে কতবার এবং কত কোয়ান্টিটি ইস্যু/রিটার্ন হয়েছে তার হিসাব
+                    # এই সিরিয়ালটি আগে কতবার এবং কত কোয়ান্টিটি ইস্যু/রিটার্ন হয়েছে তার হিসাব
                     m_history = df_t[df_t["item_code"].eq(ic_clean) & df_t["serial_number"].eq(sn_clean)]
                     sn_issued_qty = pd.to_numeric(m_history[m_history["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
                     sn_returned_qty = pd.to_numeric(m_history[m_history["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
