@@ -3,6 +3,7 @@ import pandas as pd
 from supabase import create_client, Client
 import os
 from datetime import datetime
+import urllib.parse
 
 # ==========================================
 # SUPABASE CONFIGURATION
@@ -76,7 +77,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# MAIN APP CSS (WITH INTERACTIVE CARD ACTION OVERLAYS)
+# MAIN APP CSS
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -97,18 +98,13 @@ section[data-testid="stSidebar"] section[data-testid="stRadio"] div[role="radiog
 .sb-logout-box button{background:transparent!important;color:#FFFFFF!important;border:1px solid #DC2626!important;border-radius:8px!important;padding:8px!important;font-weight:600!important;font-size:13px!important}
 .sb-logout-box button:hover{background:#DC2626!important;color:#FFFFFF!important;box-shadow:0 4px 12px rgba(220,38,38,0.2)!important}
 .sb-watermark{text-align:center!important;color:#64748B!important;font-size:11px!important;padding:5px 0 15px 0!important;font-family:'Inter',sans-serif!important}
-
-/* Card Interactivity & Layout Setup */
-.card-wrapper{position:relative!important;height:105px!important}
-.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important;position:absolute!important;top:0;left:0;right:0;z-index:1;pointer-events:none!}
-.card-wrapper:hover .p-card{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
-.card-wrapper div[data-testid="stDownloadButton"]{position:absolute!important;top:0;left:0;width:100%!important;height:105px!important;z-index:2;opacity:0!important}
-.card-wrapper div[data-testid="stDownloadButton"] button{width:100%!important;height:105px!important;border:none!important;background:transparent!important;padding:0!important;margin:0!important;cursor:pointer!important}
-
+.p-card{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:12px!important;padding:16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;height:105px!important;box-shadow:0 1px 2px rgba(0,0,0,0.03)!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
+.p-card:hover{border-color:#0EA5E9!important;background:#F0F9FF!important;transform:translateY(-2px)!important}
 .p-top{display:flex!important;align-items:center!important;gap:8px!important}
 .p-name{font-size:13px;font-weight:700;color:#0F172A!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .p-bottom{display:flex!important;flex-direction:column!important;gap:2px!important;margin-top:6px!important}
-.p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1}
+.p-stock{font-size:24px;font-weight:800;color:#059669!important;line-height:1.1;text-decoration:none!important}
+.p-stock:hover{color:#0EA5E9!important;text-decoration:underline!important}
 .p-total{font-size:11px;color:#64748B!important;font-weight:600}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-g{background:#059669}.dot-y{background:#D97706}.dot-r{background:#DC2626}
@@ -272,13 +268,12 @@ if page == "Dashboard":
 
         sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
 
-        # Prepare dedicated product dump for stock analysis
+        # Building product specific current dynamic inventory data block
         df_prod_t = df_t[df_t["product_id"].eq(pid)].copy() if not df_t.empty else pd.DataFrame(columns=COLS_T)
         df_prod_exploded = explode_serials(df_prod_t)
         
         stock_dump_rows = []
         if not df_prod_exploded.empty:
-            # Group by item code and serial number to isolate real-time holdings
             grouped = df_prod_exploded.groupby(["item_code", "serial_number"])
             for (icode, s_num), group in grouped:
                 up_q = pd.to_numeric(group[group["action_type"] == "UPLOAD"]["quantity"], errors="coerce").fillna(0).sum()
@@ -287,37 +282,36 @@ if page == "Dashboard":
                 net_bal = (up_q + rt_q) - is_q
                 if net_bal > 0:
                     stock_dump_rows.append({
-                        "Product Name": nm,
                         "Item Code": icode,
                         "Serial Number": s_num if s_num else "N/A",
                         "Available Balance": round(net_bal, 3),
                         "Unit": unit
                     })
         
-        df_stock_dump = pd.DataFrame(stock_dump_rows) if stock_dump_rows else pd.DataFrame(columns=["Product Name", "Item Code", "Serial Number", "Available Balance", "Unit"])
+        df_stock_dump = pd.DataFrame(stock_dump_rows) if stock_dump_rows else pd.DataFrame(columns=["Item Code", "Serial Number", "Available Balance", "Unit"])
+        csv_payload = df_stock_dump.to_csv(index=False)
+        
+        # HTML Data URL construction to prevent any secondary widgets rendering inside structural layouts
+        b64_csv = urllib.parse.quote(csv_payload)
+        dl_href = f"data:text/csv;charset=utf-8,{b64_csv}"
+        filename = f"StockDump_{nm.lower().replace(' ', '_')}_{DT_STR}.csv"
 
+        # Embedded dynamic layout linking configuration directly bound onto numerical string elements
         card_html = (
-            '<div class="card-wrapper">'
-            '<div class="p-card"><div class="p-top">'
-            '<span class="dot ' + dc + '"></span>'
-            '<div class="p-name">' + nm + '</div></div>'
-            '<div class="p-bottom">'
-            '<div class="p-stock">' + stk_str + ' <span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span></div>'
-            '<div class="p-total">Added: ' + total_int + ' ' + unit + '</div>'
-            '</div></div>'
+            f'<div class="p-card"><div class="p-top">'
+            f'<span class="dot {dc}"></span>'
+            f'<div class="p-name">{nm}</div></div>'
+            f'<div class="p-bottom">'
+            f'<div style="display:flex; align-items:baseline; gap:5px;">'
+            f'<a class="p-stock" href="{dl_href}" download="{filename}" title="Click to download stock data">{stk_str}</a>'
+            f'<span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span>'
+            f'</div>'
+            f'<div class="p-total">Added: {total_int} {unit}</div>'
+            f'</div></div>'
         )
         
         with cards[idx % 5]:
             st.markdown(card_html, unsafe_allow_html=True)
-            # Render invisible structural layout component overlapping visual elements to catch browser mouse events safely
-            st.download_button(
-                label="",
-                data=to_csv(df_stock_dump),
-                file_name=f"StockDump_{nm.lower().replace(' ', '_')}_{DT_STR}.csv",
-                mime="text/csv",
-                key=f"card_dl_{pid}_{idx}"
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
         idx += 1
 
     df_sum = pd.DataFrame(sum_rows)
