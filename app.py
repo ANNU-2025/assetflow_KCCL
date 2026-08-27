@@ -173,15 +173,49 @@ def get_item_code_net_stock(dt, item_code):
     return float((up + rt) - is_)
 
 def get_serial_net_issue(dt, item_code, serial):
-    if dt.empty or not item_code:
-        return 0
-    # If explicit serial trace is given
-    if serial:
-        m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
-        issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
-        returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
-        return float(issues - returns)
-    return 0
+    if dt.empty or not item_code or not serial:
+        return 0.0
+    m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
+    issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+    returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+    return float(issues - returns)
+
+def build_exact_stock_dump(dt, pid, unit):
+    """Single source of truth for Dashboard In Stock and its detail list."""
+    cols = ["Item Code", "Serial Number", "Available Balance", "Unit"]
+    if dt.empty:
+        return pd.DataFrame(columns=cols)
+
+    m = dt[dt["product_id"].eq(pid)].copy()
+    if m.empty:
+        return pd.DataFrame(columns=cols)
+
+    m["item_code"] = m["item_code"].fillna("").astype(str).str.strip()
+    m["serial_number"] = m["serial_number"].fillna("").astype(str).str.strip()
+    m["quantity"] = pd.to_numeric(m["quantity"], errors="coerce").fillna(0.0)
+
+    # Keep the same serial expansion logic used by upload/report exports.
+    m = explode_serials(m)
+
+    m["_signed"] = (
+        m["quantity"].where(m["action_type"].eq("UPLOAD"), 0.0)
+        + m["quantity"].where(m["action_type"].eq("RETURN"), 0.0)
+        - m["quantity"].where(m["action_type"].eq("ISSUE"), 0.0)
+    )
+
+    stock = (
+        m.groupby(["item_code", "serial_number"], dropna=False, as_index=False)["_signed"]
+        .sum()
+        .rename(columns={"_signed": "Available Balance"})
+    )
+
+    stock = stock[stock["Available Balance"] > 0].copy()
+    stock["Item Code"] = stock["item_code"].replace("", "N/A")
+    stock["Serial Number"] = stock["serial_number"].replace("", "N/A")
+    stock["Available Balance"] = stock["Available Balance"].round(3)
+    stock["Unit"] = unit
+
+    return stock[cols]
 
 def dot_cls(s, t):
     if t <= 0:
@@ -261,36 +295,21 @@ if page == "Dashboard":
                 errors="coerce"
             ).fillna(0).sum()
 
-        stk = get_stock(df_t, pid)
+        # ONE source of truth: card count = sum of the exact stock detail rows.
+        df_stock_dump = build_exact_stock_dump(df_t, pid, unit)
+        stk = float(df_stock_dump["Available Balance"].sum()) if not df_stock_dump.empty else 0.0
+
         dc = dot_cls(stk, total_uploads)
         stk_str = "{:.0f}".format(stk)
         total_int = str(int(total_uploads))
 
-        sum_rows.append({"Product Name": nm, "In Stock": round(stk, 3), "Unit": unit, "Total Added": int(total_uploads)})
+        sum_rows.append({
+            "Product Name": nm,
+            "In Stock": round(stk, 3),
+            "Unit": unit,
+            "Total Added": int(total_uploads)
+        })
 
-        # Building product specific current dynamic inventory data block
-        df_prod_t = df_t[df_t["product_id"].eq(pid)].copy() if not df_t.empty else pd.DataFrame(columns=COLS_T)
-        df_prod_exploded = explode_serials(df_prod_t)
-        
-        stock_dump_rows = []
-        if not df_prod_exploded.empty:
-            grouped = df_prod_exploded.groupby(["item_code", "serial_number"])
-            for (icode, s_num), group in grouped:
-                up_q = pd.to_numeric(group[group["action_type"] == "UPLOAD"]["quantity"], errors="coerce").fillna(0).sum()
-                rt_q = pd.to_numeric(group[group["action_type"] == "RETURN"]["quantity"], errors="coerce").fillna(0).sum()
-                is_q = pd.to_numeric(group[group["action_type"] == "ISSUE"]["quantity"], errors="coerce").fillna(0).sum()
-                net_bal = (up_q + rt_q) - is_q
-                if net_bal > 0:
-                    stock_dump_rows.append({
-                        "Item Code": icode,
-                        "Serial Number": s_num if s_num else "N/A",
-                        "Available Balance": round(net_bal, 3),
-                        "Unit": unit
-                    })
-        
-        df_stock_dump = pd.DataFrame(stock_dump_rows) if stock_dump_rows else pd.DataFrame(columns=["Item Code", "Serial Number", "Available Balance", "Unit"])
-        csv_payload = df_stock_dump.to_csv(index=False)
-        
         # HTML Data URL construction to prevent any secondary widgets rendering inside structural layouts
         b64_csv = urllib.parse.quote(csv_payload)
         dl_href = f"data:text/csv;charset=utf-8,{b64_csv}"
@@ -303,7 +322,7 @@ if page == "Dashboard":
             f'<div class="p-name">{nm}</div></div>'
             f'<div class="p-bottom">'
             f'<div style="display:flex; align-items:baseline; gap:5px;">'
-            f'<a class="p-stock" href="{dl_href}" download="{filename}" title="Click to download stock data">{stk_str}</a>'
+            f'<a class="p-stock" href="{dl_href}" download="{filename}" title="Click to download exact In Stock details">{stk_str}</a>'
             f'<span style="font-size:13px;font-weight:500;color:#64748B;">In Stock</span>'
             f'</div>'
             f'<div class="p-total">Added: {total_int} {unit}</div>'
