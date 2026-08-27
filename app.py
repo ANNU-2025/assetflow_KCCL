@@ -310,6 +310,9 @@ if page == "Dashboard":
             "Total Added": int(total_uploads)
         })
 
+        # Build the CSV from the exact same stock dataframe used for the card count.
+        csv_payload = df_stock_dump.to_csv(index=False)
+
         # HTML Data URL construction to prevent any secondary widgets rendering inside structural layouts
         b64_csv = urllib.parse.quote(csv_payload)
         dl_href = f"data:text/csv;charset=utf-8,{b64_csv}"
