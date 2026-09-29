@@ -1,3 +1,12 @@
+এই এররটি আসার কারণ হলো, Render-এর Environment Variables বা Streamlit Secrets-এ `SUPABASE_URL` এবং `SUPABASE_KEY` সঠিকভাবে কনফিগার করা হয়নি। আমি আগের কোডে নিরাপত্তার জন্য Hardcoded key সরিয়ে দিয়েছিলাম, যার ফলে Render সাইটে Key না পেয়ে অ্যাপ ক্র্যাশ করছে।
+
+আপনি যদি সেকিয়রিটি ঝুঁকি নিয়ে আপাতত আগের মতো কোডের ভেতরেই Key রাখতে চান (যাতে সাথে সাথে অ্যাপ চালু হয়ে যায়), তবে নিচের কোডটি ব্যবহার করুন। আমি Key গুলো আবার ডিফল্ট হিসেবে যুক্ত করে দিয়েছি। 
+
+তবে **পরামর্শ:** সবচেয়ে ভালো হয় যদি আপনি Render-এর Environment Variables-এ গিয়ে `SUPABASE_URL` এবং `SUPABASE_KEY` অ্যাড করে দেন। 
+
+নিচের কোডটি সরাসরি কপি করে ব্যবহার করুন:
+
+```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
@@ -8,19 +17,19 @@ import html
 import uuid
 
 # ==========================================
-# SECURE CONFIGURATION & SECRETS
+# SUPABASE CONFIGURATION
 # ==========================================
-# Supabase keys and Admin credentials must be in st.secrets or environment variables
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL"))
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", os.environ.get("SUPABASE_KEY"))
+# Fallback added to prevent Render crash if Environment Variables are not set.
+SUPABASE_URL = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co"))
+SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"))
 ADMIN_USER = st.secrets.get("ADMIN_USER", os.environ.get("ADMIN_USER", "admin"))
 ADMIN_PASS = st.secrets.get("ADMIN_PASS", os.environ.get("ADMIN_PASS", "kccl@2026"))
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("⚠️ Supabase credentials missing! Please configure them in `.streamlit/secrets.toml`")
+try:
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+except Exception as e:
+    st.error(f"⚠️ Failed to connect to Supabase. Check API keys. Error: {e}")
     st.stop()
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==========================================
 # SECURE AUTHENTICATION (NO URL BYPASS)
@@ -28,7 +37,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-# Clear any malicious query params on load
 if "auth" in st.query_params:
     st.query_params.clear()
 
@@ -146,7 +154,6 @@ UNITS = ["PCS", "LTR", "ML", "MTR", "DRUM", "BOX", "KG", "GM", "SET", "PAIR", "R
 COLS_P = ["id", "product_name", "item_code", "default_unit", "total_added_to_system"]
 COLS_T = ["id", "product_id", "item_code", "serial_number", "quantity", "unit", "issued_to", "invoice_no", "action_type", "created_at"]
 
-# Removed @st.cache_data to fix Stale Data (Issue #9)
 def load_data():
     try:
         r = supabase.table("tpl_inv_products").select(",".join(COLS_P)).order("product_name").execute()
@@ -171,7 +178,7 @@ def get_stock(dt, pid):
 def get_item_code_net_stock(dt, item_code, pid=None):
     if dt.empty or not item_code: return 0.0
     m = dt[dt["item_code"].eq(item_code)]
-    if pid: m = m[m["product_id"].eq(pid)] # Cross-check Product + Item Code (Issue #5)
+    if pid: m = m[m["product_id"].eq(pid)]
     up = pd.to_numeric(m[m["action_type"].eq("UPLOAD")]["quantity"], errors="coerce").fillna(0).sum()
     rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
@@ -219,7 +226,6 @@ def build_exact_stock_dump(dt, pid, unit):
     stock = m.groupby(["item_code", "serial_number"], dropna=False, as_index=False)["_signed"].sum().rename(columns={"_signed": "Available Balance"})
     stock = stock[stock["Available Balance"] > 0].copy()
     
-    # Fix Issue #12: HTML escape to prevent injection
     stock["Item Code"] = stock["item_code"].apply(lambda x: html.escape(str(x)) if x else "N/A")
     stock["Serial Number"] = stock["serial_number"].apply(lambda x: html.escape(str(x)) if x else "N/A")
     stock["Available Balance"] = stock["Available Balance"].round(3)
@@ -251,7 +257,6 @@ p_name_map = {}
 if not df_p.empty:
     p_name_map = dict(zip(df_p["id"].tolist(), df_p["product_name"].tolist()))
 
-# Fix Issue #10: Prevent duplicate product name confusion by showing Item Code
 if not df_p.empty:
     df_p["display_name"] = df_p["product_name"] + " [" + df_p["item_code"].fillna("N/A") + "]"
 
@@ -269,7 +274,7 @@ if page == "Dashboard":
 
     for idx, row in df_p.iterrows():
         pid = row["id"]
-        nm = html.escape(str(row["product_name"])) # Fix Issue #12: HTML escape
+        nm = html.escape(str(row["product_name"]))
         unit = row["default_unit"]
 
         total_uploads = 0.0
@@ -330,7 +335,6 @@ if page == "Dashboard":
         st.markdown('<p style="font-size:13px;font-weight:600;color:#475569;margin-bottom:8px">Targeted Asset Extraction</p>', unsafe_allow_html=True)
         sel = st.selectbox("Select Product", df_p["display_name"].tolist(), key="cs", label_visibility="collapsed")
         if sel:
-            # Extract actual product name before bracket
             actual_nm = sel.split(" [")[0]
             tid = df_p[df_p["product_name"].eq(actual_nm)]["id"].values[0]
             df_is = df_t[(df_t["product_id"].eq(tid)) & (df_t["action_type"].eq("ISSUE"))].copy()
@@ -345,14 +349,13 @@ if page == "Dashboard":
 
 
 # ==========================================
-# TRANSACTION (SECURE & RACE-CONDITION FREE)
+# TRANSACTION
 # ==========================================
 elif page == "Transaction":
     if df_p.empty:
         st.warning("Add products to master catalog first.")
         st.stop()
 
-    # Fix Issue #8: Prevent multiple form submits creating duplicates
     if "txn_processing" not in st.session_state:
         st.session_state.txn_processing = False
 
@@ -390,8 +393,6 @@ elif page == "Transaction":
         if qty <= 0: errs.append("Quantity must be greater than zero.")
         if action != "UPLOAD" and not issued_to.strip(): errs.append("Issued To is required for ISSUE / RETURN.")
         if not invoice.strip(): errs.append("Invoice / DC No is required.")
-        
-        # Fix Issue #6: Blank Serial Allowed
         if action in ["ISSUE", "RETURN"] and not sn_clean:
             errs.append("Serial Number is mandatory for ISSUE and RETURN actions.")
             
@@ -399,18 +400,14 @@ elif page == "Transaction":
             for e in errs: st.error(e)
             st.stop()
 
-        # Fix Issue #5: Cross-check Product + Item Code
         prod_row = df_p[df_p["product_name"].eq(sel_prod)].iloc[0]
         pid = int(prod_row["id"])
-        
-        # Fix Issue #8: Lock session to prevent double click
         st.session_state.txn_processing = True
 
         if action == "UPLOAD":
             codes = [c.strip() for c in ic_clean.split(",") if c.strip()]
             serials = [s.strip() for s in sn_clean.split(",") if s.strip()] if sn_clean else []
             
-            # Fix Issue #7: Bulk upload mismatch
             if serials and len(codes) != len(serials):
                 st.error(f"Mismatch error: You provided {len(codes)} Item Code(s) but {len(serials)} Serial Number(s). They must match exactly.")
                 st.session_state.txn_processing = False
@@ -422,7 +419,7 @@ elif page == "Transaction":
             last_qty = round(qty - distributed, 3)
 
             ok = 0
-            txn_ref = str(uuid.uuid4()) # Prevents DB duplication
+            txn_ref = str(uuid.uuid4())
             for i in range(num_entries):
                 code = codes[i] if i < len(codes) else codes[-1]
                 sn = serials[i] if i < len(serials) else ""
@@ -448,24 +445,20 @@ elif page == "Transaction":
                 st.rerun()
 
         elif action == "ISSUE":
-            # Re-fetch latest data right before insert (Race Condition Fix Issue #11)
             _, df_t_latest = load_data()
             
-            # Issue #5: Verify Item code belongs to this Product
             valid_match = df_t_latest[(df_t_latest["item_code"].eq(ic_clean)) & (df_t_latest["product_id"].eq(pid))]
             if valid_match.empty:
                 st.error(f"Item Code '{ic_clean}' does not belong to '{sel_prod}'. Cross-check failed.")
                 st.session_state.txn_processing = False
                 st.stop()
                 
-            # Check Serial exists in uploads
             match = valid_match[valid_match["serial_number"].eq(sn_clean)]
             if match.empty:
                 st.error(f"Serial '{sn_clean}' not found in uploads for '{ic_clean}'!")
                 st.session_state.txn_processing = False
                 st.stop()
                 
-            # Calculate exact available balance for this specific serial
             sn_uploaded_qty = pd.to_numeric(match["quantity"], errors="coerce").fillna(0).sum()
             m_history = df_t_latest[df_t_latest["item_code"].eq(ic_clean) & df_t_latest["serial_number"].eq(sn_clean)]
             sn_issued_qty = pd.to_numeric(m_history[m_history["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
@@ -498,7 +491,6 @@ elif page == "Transaction":
         elif action == "RETURN":
             _, df_t_latest = load_data()
             
-            # Fix Issue #4: Check Return Quantity Limit
             net_issued = get_serial_net_issue(df_t_latest, ic_clean, sn_clean)
             if net_issued <= 0:
                 st.error(f"Serial '{sn_clean}' has NOT been issued or already returned! Cannot return.")
@@ -561,7 +553,6 @@ elif page == "Reports":
     if dt_ != mx: df_f = df_f[df_f["_d"] <= dt_]
     if it_: df_f = df_f[df_f["issued_to"].isin(it_)]
     if im_:
-        # Extract actual names for filtering
         actual_names = [x.split(" [")[0] for x in im_]
         df_f = df_f[df_f["product_name"].isin(actual_names)]
     if st_: df_f = df_f[df_f["action_type"].isin(st_)]
@@ -591,3 +582,4 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=450)
     else:
         st.warning("No records match this filter.")
+```
