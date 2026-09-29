@@ -22,7 +22,7 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# SECURE AUTHENTICATION (NO URL BYPASS)
+# SECURE AUTHENTICATION
 # ==========================================
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -79,7 +79,7 @@ if not st.session_state["logged_in"]:
     st.stop()
 
 # ==========================================
-# MAIN APP CSS (PROFESSIONAL UI)
+# MAIN APP CSS (PROFESSIONAL UI & ERROR READABILITY)
 # ==========================================
 st.markdown("""<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -87,6 +87,34 @@ st.markdown("""<style>
 .block-container{padding:1.5rem 2rem!important;max-width:1600px;margin:0 auto;position:relative;z-index:1}
 header[data-testid="stHeader"]{visibility:hidden!important;height:0!important}
 #MainMenu, footer{visibility:hidden!important}
+
+/* READABLE ERROR & SUCCESS MESSAGES */
+div[data-baseweb="notification"][data-kind="negative"] {
+    background-color: #FEF2F2 !important;
+    color: #7F1D1D !important;
+    border: 1px solid #FCA5A5 !important;
+    border-left: 4px solid #DC2626 !important;
+    border-radius: 8px !important;
+}
+div[data-baseweb="notification"][data-kind="negative"] svg {
+    color: #DC2626 !important;
+}
+div[data-baseweb="notification"][data-kind="negative"] p {
+    color: #991B1B !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+}
+div[data-baseweb="notification"][data-kind="positive"] {
+    background-color: #F0FDF4 !important;
+    color: #14532D !important;
+    border: 1px solid #86EFAC !important;
+    border-left: 4px solid #10B981 !important;
+    border-radius: 8px !important;
+}
+div[data-baseweb="notification"][data-kind="positive"] p {
+    color: #14532D !important;
+    font-weight: 600 !important;
+}
 
 /* SIDEBAR */
 section[data-testid="stSidebar"]{background:#0F172A!important;border-right:1px solid #1E293B!important}
@@ -157,14 +185,6 @@ def load_data():
         dt = pd.DataFrame(columns=COLS_T)
     return dp, dt
 
-def get_stock(dt, pid):
-    if dt.empty: return 0.0
-    m = dt[dt["product_id"].eq(pid)]
-    up = pd.to_numeric(m[m["action_type"].eq("UPLOAD")]["quantity"], errors="coerce").fillna(0).sum()
-    rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
-    is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
-    return float((up + rt) - is_)
-
 def get_item_code_net_stock(dt, item_code, pid=None):
     if dt.empty or not item_code: return 0.0
     m = dt[dt["item_code"].eq(item_code)]
@@ -173,13 +193,6 @@ def get_item_code_net_stock(dt, item_code, pid=None):
     rt = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
     is_ = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
     return float((up + rt) - is_)
-
-def get_serial_net_issue(dt, item_code, serial):
-    if dt.empty or not item_code or not serial: return 0.0
-    m = dt[dt["item_code"].eq(item_code) & dt["serial_number"].eq(serial)]
-    issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
-    returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
-    return float(issues - returns)
 
 def explode_serials(df):
     if df.empty: return df
@@ -339,7 +352,7 @@ if page == "Dashboard":
 
 
 # ==========================================
-# TRANSACTION
+# TRANSACTION (FLEXIBLE ISSUE/RETURN)
 # ==========================================
 elif page == "Transaction":
     if df_p.empty:
@@ -356,7 +369,7 @@ elif page == "Transaction":
         sel_prod = sel_prod_disp.split(" [")[0]
         
         item_code = st.text_input("Item Code *", placeholder="Single item code (e.g., IC-001)", key="tc")
-        serial = st.text_area("Serial Number(s)", placeholder="Mandatory for ISSUE/RETURN. Comma-separated for bulk UPLOAD.", height=60, key="ts")
+        serial = st.text_area("Serial Number(s)", placeholder="Optional for ISSUE/RETURN. Comma-separated for bulk UPLOAD.", height=60, key="ts")
         st.markdown('<div class="hint">UPLOAD: comma-separated serials = each gets its own row. Quantity is auto-divided equally.</div>', unsafe_allow_html=True)
         
         unit = st.selectbox("Unit *", UNITS, key="tu")
@@ -383,8 +396,6 @@ elif page == "Transaction":
         if qty <= 0: errs.append("Quantity must be greater than zero.")
         if action != "UPLOAD" and not issued_to.strip(): errs.append("Issued To is required for ISSUE / RETURN.")
         if not invoice.strip(): errs.append("Invoice / DC No is required.")
-        if action in ["ISSUE", "RETURN"] and not sn_clean:
-            errs.append("Serial Number is mandatory for ISSUE and RETURN actions.")
             
         if errs:
             for e in errs: st.error(e)
@@ -443,20 +454,26 @@ elif page == "Transaction":
                 st.session_state.txn_processing = False
                 st.stop()
                 
-            match = valid_match[valid_match["serial_number"].eq(sn_clean)]
-            if match.empty:
-                st.error(f"Serial '{sn_clean}' not found in uploads for '{ic_clean}'!")
-                st.session_state.txn_processing = False
-                st.stop()
+            if sn_clean:
+                match = valid_match[valid_match["serial_number"].eq(sn_clean)]
+                if match.empty:
+                    st.error(f"Serial '{sn_clean}' not found in uploads for '{ic_clean}'!")
+                    st.session_state.txn_processing = False
+                    st.stop()
                 
-            sn_uploaded_qty = pd.to_numeric(match["quantity"], errors="coerce").fillna(0).sum()
-            m_history = df_t_latest[df_t_latest["item_code"].eq(ic_clean) & df_t_latest["serial_number"].eq(sn_clean)]
-            sn_issued_qty = pd.to_numeric(m_history[m_history["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
-            sn_returned_qty = pd.to_numeric(m_history[m_history["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
-            sn_available_balance = (sn_uploaded_qty + sn_returned_qty) - sn_issued_qty
+                sn_uploaded_qty = pd.to_numeric(match["quantity"], errors="coerce").fillna(0).sum()
+                m_history = df_t_latest[df_t_latest["item_code"].eq(ic_clean) & df_t_latest["serial_number"].eq(sn_clean)]
+                sn_issued_qty = pd.to_numeric(m_history[m_history["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+                sn_returned_qty = pd.to_numeric(m_history[m_history["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+                available_balance = (sn_uploaded_qty + sn_returned_qty) - sn_issued_qty
+                balance_msg = f"for Serial '{sn_clean}'"
+            else:
+                # If no serial provided, check entire item code balance
+                available_balance = get_item_code_net_stock(df_t_latest, ic_clean, pid)
+                balance_msg = f"for Item Code '{ic_clean}'"
             
-            if qty > sn_available_balance:
-                st.error(f"Insufficient stock for Serial '{sn_clean}'! Available Balance: {sn_available_balance:.3f} {unit}")
+            if qty > available_balance:
+                st.error(f"Insufficient stock {balance_msg}! Available Balance: {available_balance:.3f} {unit}")
                 st.session_state.txn_processing = False
                 st.stop()
 
@@ -471,7 +488,7 @@ elif page == "Transaction":
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
                     st.toast("Asset Issued Successfully!", icon="📤")
-                    st.success(f"Issued: {qty:.3f} {unit} — {ic_clean} / {sn_clean}")
+                    st.success(f"Issued: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else ""))
                     st.session_state.txn_processing = False
                     st.rerun()
             except Exception as ex:
@@ -481,14 +498,27 @@ elif page == "Transaction":
         elif action == "RETURN":
             _, df_t_latest = load_data()
             
-            net_issued = get_serial_net_issue(df_t_latest, ic_clean, sn_clean)
+            # Logical check: You can return up to the amount issued (part-wise or full)
+            if sn_clean:
+                # If serial provided, check specific serial's issued balance
+                m = df_t_latest[(df_t_latest["item_code"].eq(ic_clean)) & (df_t_latest["serial_number"].eq(sn_clean))]
+                msg_context = f"Serial '{sn_clean}'"
+            else:
+                # If no serial, check whole item code's issued balance
+                m = df_t_latest[(df_t_latest["item_code"].eq(ic_clean)) & (df_t_latest["product_id"].eq(pid))]
+                msg_context = f"Item Code '{ic_clean}'"
+                
+            issues = pd.to_numeric(m[m["action_type"].eq("ISSUE")]["quantity"], errors="coerce").fillna(0).sum()
+            returns = pd.to_numeric(m[m["action_type"].eq("RETURN")]["quantity"], errors="coerce").fillna(0).sum()
+            net_issued = float(issues - returns)
+            
             if net_issued <= 0:
-                st.error(f"Serial '{sn_clean}' has NOT been issued or already returned! Cannot return.")
+                st.error(f"{msg_context} has NOT been issued or already fully returned! Cannot return.")
                 st.session_state.txn_processing = False
                 st.stop()
                 
             if qty > net_issued:
-                st.error(f"Cannot return {qty} {unit}. Only {net_issued:.3f} {unit} are currently issued for this serial.")
+                st.error(f"Cannot return {qty} {unit}. Only {net_issued:.3f} {unit} are currently issued for {msg_context}.")
                 st.session_state.txn_processing = False
                 st.stop()
 
@@ -503,7 +533,7 @@ elif page == "Transaction":
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
                     st.toast("Asset Return Logged!", icon="📥")
-                    st.success(f"Returned: {qty:.3f} {unit} — {ic_clean} / {sn_clean}")
+                    st.success(f"Returned: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else ""))
                     st.session_state.txn_processing = False
                     st.rerun()
             except Exception as ex:
