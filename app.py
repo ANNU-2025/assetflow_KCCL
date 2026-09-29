@@ -420,7 +420,6 @@ elif page == "Transaction":
             last_qty = round(qty - distributed, 3)
 
             ok = 0
-            txn_ref = str(uuid.uuid4())
             for i in range(num_entries):
                 code = codes[i] if i < len(codes) else codes[-1]
                 sn = serials[i] if i < len(serials) else ""
@@ -430,8 +429,7 @@ elif page == "Transaction":
                     "product_id": pid, "item_code": code, "serial_number": sn,
                     "quantity": entry_qty, "unit": unit, "issued_to": "",
                     "invoice_no": invoice.strip(), "action_type": "UPLOAD",
-                    "created_at": datetime.now().isoformat(),
-                    "transaction_ref": txn_ref
+                    "created_at": datetime.now().isoformat()
                 }
                 try:
                     res = supabase.table("tpl_inv_transactions").insert(payload).execute()
@@ -468,7 +466,6 @@ elif page == "Transaction":
                 available_balance = (sn_uploaded_qty + sn_returned_qty) - sn_issued_qty
                 balance_msg = f"for Serial '{sn_clean}'"
             else:
-                # If no serial provided, check entire item code balance
                 available_balance = get_item_code_net_stock(df_t_latest, ic_clean, pid)
                 balance_msg = f"for Item Code '{ic_clean}'"
             
@@ -481,8 +478,7 @@ elif page == "Transaction":
                 "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "ISSUE",
-                "created_at": datetime.now().isoformat(),
-                "transaction_ref": str(uuid.uuid4())
+                "created_at": datetime.now().isoformat()
             }
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
@@ -498,13 +494,10 @@ elif page == "Transaction":
         elif action == "RETURN":
             _, df_t_latest = load_data()
             
-            # Logical check: You can return up to the amount issued (part-wise or full)
             if sn_clean:
-                # If serial provided, check specific serial's issued balance
                 m = df_t_latest[(df_t_latest["item_code"].eq(ic_clean)) & (df_t_latest["serial_number"].eq(sn_clean))]
                 msg_context = f"Serial '{sn_clean}'"
             else:
-                # If no serial, check whole item code's issued balance
                 m = df_t_latest[(df_t_latest["item_code"].eq(ic_clean)) & (df_t_latest["product_id"].eq(pid))]
                 msg_context = f"Item Code '{ic_clean}'"
                 
@@ -526,8 +519,7 @@ elif page == "Transaction":
                 "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "RETURN",
-                "created_at": datetime.now().isoformat(),
-                "transaction_ref": str(uuid.uuid4())
+                "created_at": datetime.now().isoformat()
             }
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
