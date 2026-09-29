@@ -1,11 +1,3 @@
-এই এররটি আসার কারণ হলো, Render-এর Environment Variables বা Streamlit Secrets-এ `SUPABASE_URL` এবং `SUPABASE_KEY` সঠিকভাবে কনফিগার করা হয়নি। আমি আগের কোডে নিরাপত্তার জন্য Hardcoded key সরিয়ে দিয়েছিলাম, যার ফলে Render সাইটে Key না পেয়ে অ্যাপ ক্র্যাশ করছে।
-
-আপনি যদি সেকিয়রিটি ঝুঁকি নিয়ে আপাতত আগের মতো কোডের ভেতরেই Key রাখতে চান (যাতে সাথে সাথে অ্যাপ চালু হয়ে যায়), তবে নিচের কোডটি ব্যবহার করুন। আমি Key গুলো আবার ডিফল্ট হিসেবে যুক্ত করে দিয়েছি। 
-
-তবে **পরামর্শ:** সবচেয়ে ভালো হয় যদি আপনি Render-এর Environment Variables-এ গিয়ে `SUPABASE_URL` এবং `SUPABASE_KEY` অ্যাড করে দেন। 
-
-নিচের কোডটি সরাসরি কপি করে ব্যবহার করুন:
-
 ```python
 import streamlit as st
 import pandas as pd
@@ -19,16 +11,15 @@ import uuid
 # ==========================================
 # SUPABASE CONFIGURATION
 # ==========================================
-# Fallback added to prevent Render crash if Environment Variables are not set.
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", os.environ.get("SUPABASE_URL", "https://emdjnndnsdebhbzebrsg.supabase.co"))
-SUPABASE_KEY = st.secrets.get("SUPABASE_KEY", os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"))
-ADMIN_USER = st.secrets.get("ADMIN_USER", os.environ.get("ADMIN_USER", "admin"))
-ADMIN_PASS = st.secrets.get("ADMIN_PASS", os.environ.get("ADMIN_PASS", "kccl@2026"))
+SUPABASE_URL = "https://emdjnndnsdebhbzebrsg.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
+ADMIN_USER = "admin"
+ADMIN_PASS = "kccl@2026"
 
 try:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 except Exception as e:
-    st.error(f"⚠️ Failed to connect to Supabase. Check API keys. Error: {e}")
+    st.error(f"Failed to connect to database: {e}")
     st.stop()
 
 # ==========================================
@@ -439,7 +430,7 @@ elif page == "Transaction":
                     st.error("Failed for " + code + ": " + str(ex))
             
             if ok > 0:
-                st.toast("🎉 Batch Upload Committed Successfully!", icon="📥")
+                st.toast("Batch Upload Committed Successfully!", icon="📥")
                 st.success(f"Uploaded {ok} item(s) — {per_qty:.3f} {unit} each (total {qty:.3f})")
                 st.session_state.txn_processing = False
                 st.rerun()
@@ -480,7 +471,7 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.toast("🚀 Asset Issued Successfully!", icon="📤")
+                    st.toast("Asset Issued Successfully!", icon="📤")
                     st.success(f"Issued: {qty:.3f} {unit} — {ic_clean} / {sn_clean}")
                     st.session_state.txn_processing = False
                     st.rerun()
@@ -512,7 +503,7 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.toast("✅ Asset Return Logged!", icon="📥")
+                    st.toast("Asset Return Logged!", icon="📥")
                     st.success(f"Returned: {qty:.3f} {unit} — {ic_clean} / {sn_clean}")
                     st.session_state.txn_processing = False
                     st.rerun()
