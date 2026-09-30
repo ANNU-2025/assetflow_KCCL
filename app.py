@@ -7,7 +7,7 @@ import urllib.parse
 import html
 
 # ==========================================
-# SUPABASE CONFIGURATION (Hardcoded to prevent Invalid API key error on Render)
+# SUPABASE CONFIGURATION
 # ==========================================
 SUPABASE_URL = "https://emdjnndnsdebhbzebrsg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZGpubmRuc2RlYmhiemVicnNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzU4NDYsImV4cCI6MjA5Njc1MTg0Nn0.ypy3k30Nbp2caJaNXpwxbrnUzrOLrhwTJ1FZwW5L8Fc"
@@ -351,7 +351,7 @@ if page == "Dashboard":
 
 
 # ==========================================
-# TRANSACTION (WITH AUTO-LOCKED UNIT)
+# TRANSACTION (WITH STRICT PRODUCT MAPPING & NOTIFICATIONS)
 # ==========================================
 elif page == "Transaction":
     if df_p.empty:
@@ -361,14 +361,22 @@ elif page == "Transaction":
     if "txn_processing" not in st.session_state:
         st.session_state.txn_processing = False
 
+    # Display Success Message if it exists in session state
+    if "success_msg" in st.session_state:
+        st.success(st.session_state["success_msg"])
+        del st.session_state["success_msg"]
+
     cl, cr = st.columns(2)
     with cl:
         st.markdown('<div class="form-sec">Asset Parameters</div>', unsafe_allow_html=True)
         sel_prod_disp = st.selectbox("Product *", df_p["display_name"].tolist(), key="tp")
-        sel_prod = sel_prod_disp.split(" [")[0]
         
-        # Fetch Default Unit for selected product and lock it
-        prod_row = df_p[df_p["product_name"].eq(sel_prod)].iloc[0]
+        # FIX: Get exact row using display_name to prevent wrong PID for duplicate names
+        prod_row = df_p[df_p["display_name"].eq(sel_prod_disp)].iloc[0]
+        pid = int(prod_row["id"])
+        sel_prod = prod_row["product_name"]
+        
+        # Auto-Lock Unit
         default_unit = prod_row["default_unit"]
         unit_idx = UNITS.index(default_unit) if default_unit in UNITS else 0
         unit = st.selectbox("Unit * (Auto-locked)", UNITS, index=unit_idx, key="tu", disabled=True)
@@ -405,7 +413,6 @@ elif page == "Transaction":
             for e in errs: st.error(e)
             st.stop()
 
-        pid = int(prod_row["id"])
         st.session_state.txn_processing = True
 
         if action == "UPLOAD":
@@ -413,7 +420,7 @@ elif page == "Transaction":
             serials = [s.strip() for s in sn_clean.split(",") if s.strip()] if sn_clean else []
             
             if serials and len(codes) != len(serials):
-                st.error(f"Mismatch error: You provided {len(codes)} Item Code(s) but {len(serials)} Serial Number(s). They must match exactly.")
+                st.error(f"❌ Mismatch error: You provided {len(codes)} Item Code(s) but {len(serials)} Serial Number(s). They must match exactly.")
                 st.session_state.txn_processing = False
                 st.stop()
             
@@ -438,12 +445,11 @@ elif page == "Transaction":
                     res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                     if res.data: ok += 1
                 except Exception as ex:
-                    st.error("Failed for " + code + ": " + str(ex))
+                    st.error("❌ Failed for " + code + ": " + str(ex))
             
             if ok > 0:
-                st.toast("Batch Upload Committed Successfully!", icon="📥")
-                st.success(f"✅ Uploaded {ok} item(s) — {per_qty:.3f} {unit} each (total {qty:.3f})")
                 st.session_state.txn_processing = False
+                st.session_state.success_msg = f"✅ Uploaded {ok} item(s) — {per_qty:.3f} {unit} each (total {qty:.3f})"
                 st.rerun()
 
         elif action == "ISSUE":
@@ -486,12 +492,12 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.toast("Asset Issued Successfully!", icon="📤")
-                    st.success(f"✅ Issued: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else ""))
                     st.session_state.txn_processing = False
+                    st.session_state.success_msg = f"✅ Issued: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else "")
                     st.rerun()
                 else:
                     st.error("❌ Insert failed. Check RLS.")
+                    st.session_state.txn_processing = False
             except Exception as ex:
                 st.error("❌ DB Error: " + str(ex))
                 st.session_state.txn_processing = False
@@ -529,12 +535,12 @@ elif page == "Transaction":
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
                 if res.data:
-                    st.toast("Asset Return Logged!", icon="📥")
-                    st.success(f"✅ Returned: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else ""))
                     st.session_state.txn_processing = False
+                    st.session_state.success_msg = f"✅ Returned: {qty:.3f} {unit} — {ic_clean}" + (f" / {sn_clean}" if sn_clean else "")
                     st.rerun()
                 else:
                     st.error("❌ Insert failed. Check RLS.")
+                    st.session_state.txn_processing = False
             except Exception as ex:
                 st.error("❌ DB Error: " + str(ex))
                 st.session_state.txn_processing = False
@@ -572,8 +578,9 @@ elif page == "Reports":
     if dt_ != mx: df_f = df_f[df_f["_d"] <= dt_]
     if it_: df_f = df_f[df_f["issued_to"].isin(it_)]
     if im_:
-        actual_names = [x.split(" [")[0] for x in im_]
-        df_f = df_f[df_f["product_name"].isin(actual_names)]
+        # FIX: Filter by exact product_id to handle duplicate names correctly
+        selected_pids = df_p[df_p["display_name"].isin(im_)]["id"].tolist()
+        df_f = df_f[df_f["product_id"].isin(selected_pids)]
     if st_: df_f = df_f[df_f["action_type"].isin(st_)]
     if iv_: df_f = df_f[df_f["invoice_no"].isin(iv_)]
 
