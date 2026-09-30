@@ -1,12 +1,3 @@
-আপনার সমস্যাটি হলো Render সার্ভার UTC টাইমজোন ব্যবহার করে, যার কারণে ঢাকা/কলকাতার সময়ের চেয়ে ৫ ঘণ্টা ৩০ মিনিট পিছিয়ে সময় দেখাচ্ছে (যেমন সকাল ৬টা)।
-
-আমি কোডে `timezone` এবং `timedelta` যুক্ত করে সময়টিকে সরাসরি **IST (Kolkata/Dhaka Time)**-এ লক করে দিয়েছি। এখন ডাটাবেসে এবং অ্যাপে সবসময় কলকাতার সঠিক সময়ই রেকর্ড হবে।
-
-নিচের সম্পূর্ণ কোডটি কপি করে ব্যবহার করুন (বাইরের `---` চিহ্নগুলো কপি করবেন না):
-
----
-
-```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
@@ -627,4 +618,3 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=450)
     else:
         st.warning("No records match this filter.")
-```
