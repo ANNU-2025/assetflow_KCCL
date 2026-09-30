@@ -1,10 +1,24 @@
+আপনার সমস্যাটি হলো Render সার্ভার UTC টাইমজোন ব্যবহার করে, যার কারণে ঢাকা/কলকাতার সময়ের চেয়ে ৫ ঘণ্টা ৩০ মিনিট পিছিয়ে সময় দেখাচ্ছে (যেমন সকাল ৬টা)।
+
+আমি কোডে `timezone` এবং `timedelta` যুক্ত করে সময়টিকে সরাসরি **IST (Kolkata/Dhaka Time)**-এ লক করে দিয়েছি। এখন ডাটাবেসে এবং অ্যাপে সবসময় কলকাতার সঠিক সময়ই রেকর্ড হবে।
+
+নিচের সম্পূর্ণ কোডটি কপি করে ব্যবহার করুন (বাইরের `---` চিহ্নগুলো কপি করবেন না):
+
+---
+
+```python
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import urllib.parse
 import html
+
+# ==========================================
+# TIMEZONE CONFIGURATION (IST - Kolkata/Dhaka)
+# ==========================================
+IST = timezone(timedelta(hours=5, minutes=30))
 
 # ==========================================
 # SUPABASE CONFIGURATION
@@ -241,9 +255,15 @@ def dot_cls(s, t):
     if r > 0.15: return "dot-y"
     return "dot-r"
 
+# FIX: Convert UTC DB time to IST Kolkata/Local time for display
 def ind_dt(v):
-    try: return pd.to_datetime(v).strftime("%d-%b-%Y %H:%M")
-    except Exception: return str(v)
+    try:
+        dt = pd.to_datetime(v)
+        if dt.tzinfo is None:
+            dt = dt.tz_localize('UTC')
+        return dt.tz_convert(IST).strftime("%d-%b-%Y %H:%M")
+    except Exception:
+        return str(v)
 
 def to_csv(df):
     return df.to_csv(index=False).encode("utf-8")
@@ -251,7 +271,7 @@ def to_csv(df):
 # ==========================================
 # ROUTER & DATA FETCH
 # ==========================================
-NOW = datetime.now()
+NOW = datetime.now(IST)
 DT_STR = NOW.strftime("%d%b%Y")
 df_p, df_t = load_data()
 
@@ -371,7 +391,6 @@ elif page == "Transaction":
         st.markdown('<div class="form-sec">Asset Parameters</div>', unsafe_allow_html=True)
         sel_prod_disp = st.selectbox("Product *", df_p["display_name"].tolist(), key="tp")
         
-        # FIX: Get exact row using display_name to prevent wrong PID for duplicate names
         prod_row = df_p[df_p["display_name"].eq(sel_prod_disp)].iloc[0]
         pid = int(prod_row["id"])
         sel_prod = prod_row["product_name"]
@@ -439,7 +458,7 @@ elif page == "Transaction":
                     "product_id": pid, "item_code": code, "serial_number": sn,
                     "quantity": entry_qty, "unit": unit, "issued_to": "",
                     "invoice_no": invoice.strip(), "action_type": "UPLOAD",
-                    "created_at": datetime.now().isoformat()
+                    "created_at": datetime.now(IST).isoformat()
                 }
                 try:
                     res = supabase.table("tpl_inv_transactions").insert(payload).execute()
@@ -487,7 +506,7 @@ elif page == "Transaction":
                 "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "ISSUE",
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now(IST).isoformat()
             }
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
@@ -530,7 +549,7 @@ elif page == "Transaction":
                 "product_id": pid, "item_code": ic_clean, "serial_number": sn_clean,
                 "quantity": qty, "unit": unit, "issued_to": issued_to.strip(),
                 "invoice_no": invoice.strip(), "action_type": "RETURN",
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now(IST).isoformat()
             }
             try:
                 res = supabase.table("tpl_inv_transactions").insert(payload).execute()
@@ -608,3 +627,4 @@ elif page == "Reports":
         st.dataframe(df_s, use_container_width=True, hide_index=True, height=450)
     else:
         st.warning("No records match this filter.")
+```
